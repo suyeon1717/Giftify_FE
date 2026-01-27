@@ -1,16 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FundingActionBox } from '@/features/funding/components/FundingActionBox';
+import { ParticipateModal } from '@/features/funding/components/ParticipateModal';
 import { Separator } from '@/components/ui/separator';
 
 export default function FundingDetailPage() {
     const params = useParams();
     const id = params.id as string;
+    const [participateModalOpen, setParticipateModalOpen] = useState(false); // Added state for modal
 
     /**
      * [Mock Data] 펀딩 상세 정보를 정의합니다.
@@ -104,9 +107,17 @@ export default function FundingDetailPage() {
                 <div className="fixed bottom-0 left-0 right-0 bg-background z-20 md:static">
                     <FundingActionBox
                         funding={funding}
-                        onParticipate={() => console.log('Participate Clicked')}
+                        onParticipate={() => setParticipateModalOpen(true)} // Modified onParticipate
                     />
                 </div>
+
+                {/* Participate Modal */}
+                <ParticipateModal
+                    open={participateModalOpen}
+                    onOpenChange={setParticipateModalOpen}
+                    funding={funding}
+                    onSuccess={() => console.log('Participation Success')}
+                />
             </div>
         </AppShell>
     );
