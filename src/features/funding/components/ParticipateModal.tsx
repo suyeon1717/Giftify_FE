@@ -10,18 +10,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { AmountInput } from '@/components/common/AmountInput';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useParticipateFunding } from '@/features/funding/hooks/useFundingMutations';
 
 interface ParticipateModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     funding: {
         id: string;
-        title: string;
+        product: {
+            name: string;
+        };
         currentAmount: number;
         targetAmount: number;
     };
@@ -34,28 +35,41 @@ export function ParticipateModal({
     funding,
     onSuccess
 }: ParticipateModalProps) {
-    const [loading, setLoading] = useState(false);
     const [amount, setAmount] = useState(0);
-    const [message, setMessage] = useState('');
 
+    const participateFunding = useParticipateFunding();
     const remainingAmount = funding.targetAmount - funding.currentAmount;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
         if (amount <= 0) {
             toast.error('참여 금액을 입력해주세요.');
             return;
         }
 
-        setLoading(true);
+        if (amount > remainingAmount) {
+            toast.error(`남은 금액은 ${remainingAmount.toLocaleString()}원 입니다.`);
+            return;
+        }
 
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false);
-            toast.success('펀딩 참여가 완료되었습니다! (Mock)');
-            onOpenChange(false);
-            onSuccess();
-        }, 1000);
+        participateFunding.mutate(
+            {
+                fundingId: funding.id,
+                amount,
+            },
+            {
+                onSuccess: () => {
+                    toast.success('펀딩 참여가 완료되었습니다!');
+                    onOpenChange(false);
+                    onSuccess();
+                    setAmount(0);
+                },
+                onError: (error) => {
+                    toast.error(error instanceof Error ? error.message : '펀딩 참여에 실패했습니다.');
+                },
+            }
+        );
     };
 
     return (
@@ -64,7 +78,7 @@ export function ParticipateModal({
                 <DialogHeader>
                     <DialogTitle>펀딩 참여하기</DialogTitle>
                     <DialogDescription>
-                        <span className="font-bold text-foreground">{funding.title}</span>에 마음을 전하세요.
+                        <span className="font-bold text-foreground">{funding.product.name}</span>에 마음을 전하세요.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -73,23 +87,24 @@ export function ParticipateModal({
                         value={amount}
                         onChange={setAmount}
                         maxAmount={remainingAmount}
-                        walletBalance={1000000} // Mock wallet balance
+                        walletBalance={1000000}
                     />
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="message">응원 메시지</Label>
-                        <Input
-                            id="message"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="친구에게 따뜻한 한마디를 남겨주세요."
-                        />
+                    <div className="text-sm text-muted-foreground space-y-1">
+                        <div className="flex justify-between">
+                            <span>현재 모금액</span>
+                            <span className="font-medium">₩{funding.currentAmount.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>남은 금액</span>
+                            <span className="font-medium">₩{remainingAmount.toLocaleString()}</span>
+                        </div>
                     </div>
 
                     <DialogFooter>
-                        <Button type="submit" disabled={loading || amount <= 0} className="w-full">
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {amount > 0 ? `${amount.toLocaleString()}원 참여하기` : '참여하기'}
+                        <Button type="submit" disabled={participateFunding.isPending || amount <= 0} className="w-full">
+                            {participateFunding.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {amount > 0 ? `₩${amount.toLocaleString()} 참여하기` : '참여하기'}
                         </Button>
                     </DialogFooter>
                 </form>

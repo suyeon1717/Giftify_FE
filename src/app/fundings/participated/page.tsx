@@ -1,0 +1,98 @@
+'use client';
+
+import { useState } from 'react';
+import { AppShell } from '@/components/layout/AppShell';
+import { FundingCard } from '@/components/common/FundingCard';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useMyParticipatedFundings } from '@/features/funding/hooks/useFunding';
+import type { FundingStatus } from '@/types/funding';
+
+export default function ParticipatedFundingsPage() {
+    const [status, setStatus] = useState<FundingStatus | undefined>(undefined);
+
+    const { data, isLoading, isError } = useMyParticipatedFundings({ status });
+
+    return (
+        <AppShell
+            headerTitle="참여한 펀딩"
+            headerVariant="detail"
+            hasBack={true}
+            showBottomNav={true}
+        >
+            <div className="p-4 space-y-4">
+                <Tabs defaultValue="all" onValueChange={(value) => {
+                    setStatus(value === 'all' ? undefined : value as FundingStatus);
+                }}>
+                    <TabsList className="w-full grid grid-cols-4">
+                        <TabsTrigger value="all">전체</TabsTrigger>
+                        <TabsTrigger value="IN_PROGRESS">진행중</TabsTrigger>
+                        <TabsTrigger value="ACHIEVED">달성</TabsTrigger>
+                        <TabsTrigger value="ACCEPTED">완료</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="all" className="mt-4 space-y-4">
+                        <FundingList data={data} isLoading={isLoading} isError={isError} />
+                    </TabsContent>
+                    <TabsContent value="IN_PROGRESS" className="mt-4 space-y-4">
+                        <FundingList data={data} isLoading={isLoading} isError={isError} />
+                    </TabsContent>
+                    <TabsContent value="ACHIEVED" className="mt-4 space-y-4">
+                        <FundingList data={data} isLoading={isLoading} isError={isError} />
+                    </TabsContent>
+                    <TabsContent value="ACCEPTED" className="mt-4 space-y-4">
+                        <FundingList data={data} isLoading={isLoading} isError={isError} />
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </AppShell>
+    );
+}
+
+function FundingList({ data, isLoading, isError }: {
+    data: any;
+    isLoading: boolean;
+    isError: boolean;
+}) {
+    if (isLoading) {
+        return (
+            <>
+                {[...Array(3)].map((_, i) => (
+                    <div key={i} className="space-y-3">
+                        <Skeleton className="aspect-square w-full rounded-lg" />
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                    </div>
+                ))}
+            </>
+        );
+    }
+
+    if (isError || !data) {
+        return (
+            <div className="py-12 text-center">
+                <p className="text-sm text-muted-foreground">
+                    펀딩 목록을 불러올 수 없습니다.
+                </p>
+            </div>
+        );
+    }
+
+    if (data.items.length === 0) {
+        return (
+            <div className="py-12 text-center">
+                <p className="text-sm text-muted-foreground">
+                    참여한 펀딩이 없습니다.
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <>
+            {data.items.map((funding: any) => (
+                <FundingCard key={funding.id} funding={funding} />
+            ))}
+        </>
+    );
+}

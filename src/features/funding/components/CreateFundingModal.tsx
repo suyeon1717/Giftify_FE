@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -10,55 +11,66 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Slider } from '@/components/ui/slider';
 import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-
-// NOTE: Creating without Calendar/Textarea first if not installed, will accept simple text for date/desc to avoid complex install steps if not needed.
-// Actually, I should install textarea, calendar, popover for a good UX.
-// But for now, to keep it simple and robust:
-// Description: Input (or Textarea if I suspect it exists, usually not default in my bulk install list? Wait, I installed "Button, Card, Input, Avatar, Badge, Progress, Sheet, Skeleton, Separator, ScrollArea, Tabs, Dialog, DropdownMenu". Textarea, Calendar, Popover are missing.)
-// I will use simple Input for now or install them.
-// Let's use simple Input for description and date (HTML date input) to ensure speed.
+import { useCreateFunding } from '@/features/funding/hooks/useFundingMutations';
+import type { Funding } from '@/types/funding';
 
 interface CreateFundingModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    product: {
-        name: string;
-        price: number;
-        imageUrl: string;
+    wishItem: {
+        id: string;
+        product: {
+            name: string;
+            price: number;
+            imageUrl: string;
+        };
     };
-    onSuccess: () => void;
+    onSuccess: (funding: Funding) => void;
 }
 
 export function CreateFundingModal({
     open,
     onOpenChange,
-    product,
+    wishItem,
     onSuccess
 }: CreateFundingModalProps) {
-    const [loading, setLoading] = useState(false);
-    const [title, setTitle] = useState(`${product.name} 받고 싶어요!`);
-    const [description, setDescription] = useState('생일 선물로 받고 싶습니다. 도와주세요!');
-    const [targetAmount, setTargetAmount] = useState(product.price.toString());
-    const [deadline, setDeadline] = useState(
-        new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Default 2 weeks
-    );
+    const [expiresInDays, setExpiresInDays] = useState(14);
+    const [message, setMessage] = useState('');
+
+    const createFunding = useCreateFunding();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false);
-            toast.success('펀딩이 시작되었습니다!');
-            onOpenChange(false);
-            onSuccess();
-        }, 1000);
+        if (message.length > 500) {
+            toast.error('메시지는 최대 500자까지 입력 가능합니다.');
+            return;
+        }
+
+        createFunding.mutate(
+            {
+                wishItemId: wishItem.id,
+                expiresInDays,
+                message: message.trim() || undefined,
+            },
+            {
+                onSuccess: (funding) => {
+                    toast.success('펀딩이 시작되었습니다!');
+                    onOpenChange(false);
+                    onSuccess(funding);
+                    setMessage('');
+                    setExpiresInDays(14);
+                },
+                onError: (error) => {
+                    toast.error(error instanceof Error ? error.message : '펀딩 시작에 실패했습니다.');
+                },
+            }
+        );
     };
 
     return (
@@ -70,49 +82,68 @@ export function CreateFundingModal({
                         친구들에게 선물을 요청해보세요.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="title">펀딩 제목</Label>
-                        <Input
-                            id="title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                        />
+                <form onSubmit={handleSubmit} className="grid gap-6 py-4">
+                    {/* Product Display */}
+                    <div className="rounded-lg bg-secondary/30 p-4 space-y-3">
+                        <p className="text-xs font-medium text-muted-foreground">선택한 상품</p>
+                        <div className="flex gap-3">
+                            <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                                <Image
+                                    src={wishItem.product.imageUrl}
+                                    alt={wishItem.product.name}
+                                    fill
+                                    className="object-cover"
+                                />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm line-clamp-2">{wishItem.product.name}</p>
+                                <p className="font-bold mt-1">₩{wishItem.product.price.toLocaleString()}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="targetAmount">목표 금액</Label>
-                        <Input
-                            id="targetAmount"
-                            type="number"
-                            value={targetAmount}
-                            onChange={(e) => setTargetAmount(e.target.value)}
+
+                    {/* Expires In Days Slider */}
+                    <div className="grid gap-3">
+                        <div className="flex justify-between items-center">
+                            <Label htmlFor="expiresInDays">펀딩 기간</Label>
+                            <span className="text-sm font-bold">{expiresInDays}일</span>
+                        </div>
+                        <Slider
+                            id="expiresInDays"
+                            min={1}
+                            max={30}
+                            step={1}
+                            value={[expiresInDays]}
+                            onValueChange={(values) => setExpiresInDays(values[0])}
+                            className="w-full"
                         />
                         <p className="text-xs text-muted-foreground">
-                            상품 가격: {product.price.toLocaleString()}원
+                            1일 ~ 30일 사이로 설정 가능합니다.
                         </p>
                     </div>
+
+                    {/* Message */}
                     <div className="grid gap-2">
-                        <Label htmlFor="deadline">종료일</Label>
-                        <Input
-                            id="deadline"
-                            type="date"
-                            value={deadline}
-                            onChange={(e) => setDeadline(e.target.value)}
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="description">설명</Label>
-                        <Input
-                            id="description"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
+                        <Label htmlFor="message">
+                            메시지 (선택)
+                            <span className="ml-2 text-xs text-muted-foreground">
+                                {message.length}/500
+                            </span>
+                        </Label>
+                        <Textarea
+                            id="message"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
                             placeholder="친구들에게 전할 말을 적어주세요."
+                            maxLength={500}
+                            rows={3}
                         />
                     </div>
+
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            시작하기
+                        <Button type="submit" disabled={createFunding.isPending} className="w-full">
+                            {createFunding.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            펀딩 시작하기
                         </Button>
                     </DialogFooter>
                 </form>

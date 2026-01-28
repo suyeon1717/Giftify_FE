@@ -6,39 +6,67 @@ import { useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { FundingActionBox } from '@/features/funding/components/FundingActionBox';
 import { ParticipateModal } from '@/features/funding/components/ParticipateModal';
+import { RecipientActionButtons } from '@/features/funding/components/RecipientActionButtons';
+import { ParticipantsModal } from '@/features/funding/components/ParticipantsModal';
 import { Separator } from '@/components/ui/separator';
+import { useFunding } from '@/features/funding/hooks/useFunding';
+import { Button } from '@/components/ui/button';
+import { Users } from 'lucide-react';
 
 export default function FundingDetailPage() {
     const params = useParams();
     const id = params.id as string;
-    const [participateModalOpen, setParticipateModalOpen] = useState(false); // Added state for modal
+    const [participateModalOpen, setParticipateModalOpen] = useState(false);
+    const [participantsModalOpen, setParticipantsModalOpen] = useState(false);
 
-    /**
-     * [Mock Data] 펀딩 상세 정보를 정의합니다.
-     * 실제 구현 시에는 react-query의 useQuery를 통해 API로부터 데이터를 받아와야 합니다.
-     * @see {@link "@/features/funding/api/useFundingDetail"} (추후 구현 예정)
-     */
-    const funding = {
-        id,
-        title: '친구가 갖고 싶어하는 에어팟 프로',
-        description: '생일 선물로 에어팟 프로를 선물해주고 싶어합니다! 함께 해주세요.',
-        product: {
-            name: 'Apple 에어팟 프로 2세대',
-            imageUrl: '/images/placeholder-product-1.jpg',
-            price: 329000,
-        },
-        recipient: {
-            name: '김철수',
-            avatar: '',
-        },
-        currentAmount: 150000,
-        targetAmount: 329000,
-        participantCount: 5,
-        status: 'IN_PROGRESS',
-        createdAt: new Date().toISOString(),
-    };
+    const { data: funding, isLoading, isError, error } = useFunding(id);
+
+    if (isLoading) {
+        return (
+            <AppShell
+                headerTitle="펀딩 상세"
+                headerVariant="detail"
+                hasBack={true}
+                showBottomNav={false}
+            >
+                <div className="flex flex-col min-h-[calc(100vh-3.5rem)]">
+                    <Skeleton className="aspect-square w-full md:aspect-video" />
+                    <div className="flex-1 p-4 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-5 w-24" />
+                            </div>
+                        </div>
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-32 w-full rounded-lg" />
+                    </div>
+                </div>
+            </AppShell>
+        );
+    }
+
+    if (isError || !funding) {
+        return (
+            <AppShell
+                headerTitle="펀딩 상세"
+                headerVariant="detail"
+                hasBack={true}
+                showBottomNav={false}
+            >
+                <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] p-4">
+                    <p className="text-destructive">펀딩 정보를 불러올 수 없습니다.</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        {error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}
+                    </p>
+                </div>
+            </AppShell>
+        );
+    }
 
     return (
         <AppShell
@@ -63,18 +91,13 @@ export default function FundingDetailPage() {
                     {/* Recipient Info */}
                     <div className="flex items-center gap-3">
                         <Avatar>
-                            <AvatarImage src={funding.recipient.avatar} />
-                            <AvatarFallback>{funding.recipient.name[0]}</AvatarFallback>
+                            <AvatarImage src={funding.recipient.avatarUrl || undefined} />
+                            <AvatarFallback>{funding.recipient.nickname[0]}</AvatarFallback>
                         </Avatar>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">To.</p>
-                            <p className="font-bold">{funding.recipient.name}</p>
+                            <p className="font-bold">{funding.recipient.nickname}</p>
                         </div>
-                    </div>
-
-                    <div>
-                        <h1 className="text-xl font-bold leading-tight">{funding.title}</h1>
-                        <p className="mt-2 text-sm text-muted-foreground">{funding.description}</p>
                     </div>
 
                     <div className="rounded-lg bg-secondary/30 p-4">
@@ -85,30 +108,53 @@ export default function FundingDetailPage() {
 
                     <Separator />
 
-                    {/* Participants Preview (Optional) */}
+                    {/* Participants Preview */}
                     <div>
-                        <h3 className="text-sm font-bold mb-3">참여자 목록 ({funding.participantCount})</h3>
-                        <div className="flex -space-x-2 overflow-hidden">
-                            {[...Array(3)].map((_, i) => (
-                                <Avatar key={i} className="border-2 border-background w-8 h-8">
-                                    <AvatarFallback className="text-[10px]">user</AvatarFallback>
-                                </Avatar>
-                            ))}
-                            {funding.participantCount > 3 && (
-                                <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-background bg-muted text-[10px] font-medium text-muted-foreground">
-                                    +{funding.participantCount - 3}
-                                </div>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-bold">참여자 목록 ({funding.participantCount})</h3>
+                            {funding.participantCount > 0 && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setParticipantsModalOpen(true)}
+                                >
+                                    <Users className="h-4 w-4 mr-1" />
+                                    전체보기
+                                </Button>
                             )}
                         </div>
+                        {funding.participantCount > 0 ? (
+                            <div className="flex -space-x-2 overflow-hidden">
+                                {funding.participants.slice(0, 5).map((participant) => (
+                                    <Avatar key={participant.id} className="border-2 border-background w-8 h-8">
+                                        <AvatarImage src={participant.member.avatarUrl || undefined} />
+                                        <AvatarFallback className="text-[10px]">
+                                            {participant.member.nickname[0]}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                ))}
+                                {funding.participantCount > 5 && (
+                                    <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-background bg-muted text-[10px] font-medium text-muted-foreground">
+                                        +{funding.participantCount - 5}
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">아직 참여자가 없습니다.</p>
+                        )}
                     </div>
                 </div>
 
-                {/* Sticky Action Box */}
+                {/* Sticky Action Box or Recipient Actions */}
                 <div className="fixed bottom-0 left-0 right-0 bg-background z-20 md:static">
-                    <FundingActionBox
-                        funding={funding}
-                        onParticipate={() => setParticipateModalOpen(true)} // Modified onParticipate
-                    />
+                    {funding.status === 'ACHIEVED' ? (
+                        <RecipientActionButtons fundingId={funding.id} />
+                    ) : (
+                        <FundingActionBox
+                            funding={funding}
+                            onParticipate={() => setParticipateModalOpen(true)}
+                        />
+                    )}
                 </div>
 
                 {/* Participate Modal */}
@@ -117,6 +163,13 @@ export default function FundingDetailPage() {
                     onOpenChange={setParticipateModalOpen}
                     funding={funding}
                     onSuccess={() => console.log('Participation Success')}
+                />
+
+                {/* Participants Modal */}
+                <ParticipantsModal
+                    open={participantsModalOpen}
+                    onOpenChange={setParticipantsModalOpen}
+                    fundingId={funding.id}
                 />
             </div>
         </AppShell>
