@@ -17,9 +17,9 @@ export function BottomNav() {
         },
         {
             label: '검색',
-            href: '/products/search',
+            href: '/products',
             icon: Search,
-            isActive: pathname.startsWith('/products/search'),
+            isActive: pathname === '/products',
         },
         {
             label: '장바구니',

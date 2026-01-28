@@ -17,7 +17,10 @@ export interface ProductImagesProps {
 export function ProductImages({ images, alt }: ProductImagesProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  if (!images || images.length === 0) {
+  // Filter out empty strings and invalid URLs
+  const validImages = images?.filter((img) => img && img.trim() !== '') || [];
+
+  if (validImages.length === 0) {
     return (
       <div className="relative aspect-square w-full bg-gray-100 flex items-center justify-center">
         <p className="text-gray-400">No image available</p>
@@ -26,11 +29,11 @@ export function ProductImages({ images, alt }: ProductImagesProps) {
   }
 
   const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? validImages.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === validImages.length - 1 ? 0 : prev + 1));
   };
 
   return (
@@ -38,7 +41,7 @@ export function ProductImages({ images, alt }: ProductImagesProps) {
       {/* Main Image */}
       <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
         <Image
-          src={images[currentIndex]}
+          src={validImages[currentIndex]}
           alt={`${alt} - Image ${currentIndex + 1}`}
           fill
           className="object-cover"
@@ -47,7 +50,7 @@ export function ProductImages({ images, alt }: ProductImagesProps) {
         />
 
         {/* Navigation Arrows (only show if multiple images) */}
-        {images.length > 1 && (
+        {validImages.length > 1 && (
           <>
             <button
               onClick={handlePrevious}
@@ -67,9 +70,9 @@ export function ProductImages({ images, alt }: ProductImagesProps) {
         )}
 
         {/* Pagination Dots */}
-        {images.length > 1 && (
+        {validImages.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-            {images.map((_, index) => (
+            {validImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
@@ -87,9 +90,9 @@ export function ProductImages({ images, alt }: ProductImagesProps) {
       </div>
 
       {/* Thumbnails */}
-      {images.length > 1 && (
+      {validImages.length > 1 && (
         <div className="grid grid-cols-4 gap-2">
-          {images.map((image, index) => (
+          {validImages.map((image, index) => (
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}

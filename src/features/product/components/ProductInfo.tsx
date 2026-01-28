@@ -21,7 +21,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           <p className="text-sm text-gray-600">{product.category}</p>
         )}
         <p className="text-3xl font-bold tabular-nums">
-          ₩{product.price.toLocaleString()}
+          ₩{product.price?.toLocaleString() ?? 0}
         </p>
       </div>
 

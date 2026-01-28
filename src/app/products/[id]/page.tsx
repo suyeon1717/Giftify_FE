@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Share, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,9 +10,10 @@ import { ProductInfo } from '@/features/product/components/ProductInfo';
 import { AddToWishlistButton } from '@/features/product/components/AddToWishlistButton';
 import { useProductDetail } from '@/features/product/hooks/useProductDetail';
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
-  const { data: product, isLoading, error } = useProductDetail(params.id);
+  const { data: product, isLoading, error } = useProductDetail(id);
 
   if (error) {
     return (

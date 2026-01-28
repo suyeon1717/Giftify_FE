@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { WishItemCard } from '@/components/common/WishItemCard';
@@ -12,14 +13,15 @@ import { useWishlist } from '@/features/wishlist/hooks/useWishlist';
 import { WishItem } from '@/types/wishlist';
 
 interface FriendWishlistPageProps {
-    params: {
+    params: Promise<{
         userId: string;
-    };
+    }>;
 }
 
 export default function FriendWishlistPage({ params }: FriendWishlistPageProps) {
+    const { userId } = use(params);
     const router = useRouter();
-    const { data: wishlist, isLoading, error } = useWishlist(params.userId);
+    const { data: wishlist, isLoading, error } = useWishlist(userId);
 
     const handleViewFunding = (fundingId: string) => {
         router.push(`/fundings/${fundingId}`);
