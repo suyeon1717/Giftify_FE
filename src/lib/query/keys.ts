@@ -28,8 +28,7 @@ export const queryKeys = {
   wishlist: (memberId: string) => ['wishlists', memberId] as const,
 
   // Products
-  products: (params?: { search?: string; category?: string; minPrice?: number; maxPrice?: number }) =>
-    ['products', params] as const,
+  products: (params?: any) => ['products', params] as const,
   product: (id: string) => ['products', id] as const,
 
   // Members

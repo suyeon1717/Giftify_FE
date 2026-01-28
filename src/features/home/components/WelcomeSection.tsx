@@ -22,7 +22,7 @@ export function WelcomeSection() {
                     <h2 className="mb-2 text-lg font-bold">친구들과 함께 선물하기</h2>
                     <p className="mb-4 text-sm text-muted-foreground">로그인하고 펀딩을 시작해보세요!</p>
                     <Button asChild>
-                        <Link href="/api/auth/login">로그인 / 회원가입</Link>
+                        <a href="/auth/login">로그인 / 회원가입</a>
                     </Button>
                 </div>
             </section>

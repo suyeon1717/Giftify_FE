@@ -22,7 +22,7 @@ export default function ProfilePage() {
 
     // Redirect to login if not authenticated
     if (!isAuthLoading && !isAuthenticated) {
-        router.push('/api/auth/login');
+        window.location.href = '/auth/login';
         return null;
     }
 

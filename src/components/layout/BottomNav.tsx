@@ -2,11 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, ShoppingCart, User, Wallet } from 'lucide-react';
+import { Home, Search, ShoppingCart, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useUser } from '@auth0/nextjs-auth0/client';
+import { useCart } from '@/features/cart/hooks/useCart';
 
 export function BottomNav() {
     const pathname = usePathname();
+    const { user } = useUser();
+    const { data: cart } = useCart();
+
+    const cartItemCount = user ? (cart?.items.length || 0) : 0;
 
     const navItems = [
         {
@@ -26,7 +32,7 @@ export function BottomNav() {
             href: '/cart',
             icon: ShoppingCart,
             isActive: pathname.startsWith('/cart'),
-            badge: 0, // TODO: Connect to cart store
+            badge: cartItemCount,
         },
         {
             label: '지갑',

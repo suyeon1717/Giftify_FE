@@ -10,14 +10,12 @@ import { LogIn } from 'lucide-react';
  * After successful authentication, user is redirected back to the app.
  */
 export function LoginButton() {
-  const handleLogin = () => {
-    window.location.href = '/auth/login';
-  };
-
   return (
-    <Button onClick={handleLogin} variant="default" size="sm">
-      <LogIn className="mr-2 h-4 w-4" />
-      Login
+    <Button asChild variant="default" size="sm">
+      <a href="/auth/login">
+        <LogIn className="mr-2 h-4 w-4" />
+        Login
+      </a>
     </Button>
   );
 }

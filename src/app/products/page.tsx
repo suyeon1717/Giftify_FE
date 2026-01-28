@@ -1,12 +1,14 @@
 'use client';
 
 import { Suspense } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ProductSearchHeader } from '@/features/product/components/ProductSearchHeader';
 import { ProductFilters } from '@/features/product/components/ProductFilters';
 import { ProductList } from '@/features/product/components/ProductList';
-import { useProducts, useSearchProducts } from '@/features/product/hooks/useProducts';
-import type { ProductQueryParams, ProductSearchParams } from '@/types/product';
+import { useInfiniteProducts, useInfiniteSearchProducts } from '@/features/product/hooks/useProducts';
+import { Loader2 } from 'lucide-react';
+import type { ProductQueryParams } from '@/types/product';
 
 function ProductSearchContent() {
   const searchParams = useSearchParams();
@@ -15,30 +17,51 @@ function ProductSearchContent() {
   const minPrice = searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined;
   const maxPrice = searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined;
   const sort = (searchParams.get('sort') as ProductQueryParams['sort']) || 'popular';
-  const page = searchParams.get('page') ? Number(searchParams.get('page')) : 0;
 
   // Use search hook if query exists, otherwise use products hook
   const searchEnabled = !!searchQuery;
 
-  const searchResult = useSearchProducts({
+  const searchResult = useInfiniteSearchProducts({
     q: searchQuery,
     category,
-    page,
     size: 20,
   });
 
-  const productsResult = useProducts({
+  const productsResult = useInfiniteProducts({
     category,
     minPrice,
     maxPrice,
     sort,
-    page,
     size: 20,
   });
 
   const result = searchEnabled ? searchResult : productsResult;
-  const products = result.data?.items || [];
+  const products = result.data?.pages.flatMap((page) => page.items) || [];
   const isLoading = result.isLoading;
+  const hasNextPage = result.hasNextPage;
+  const isFetchingNextPage = result.isFetchingNextPage;
+
+  // Intersection Observer for infinite scroll
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          result.fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, result]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -54,9 +77,9 @@ function ProductSearchContent() {
                   &quot;{searchQuery}&quot; 검색 결과{' '}
                 </span>
               )}
-              {result.data?.page && (
+              {result.data?.pages[0]?.page && (
                 <span>
-                  ({result.data.page.totalElements}개)
+                  ({result.data.pages[0].page.totalElements}개)
                 </span>
               )}
             </div>
@@ -66,21 +89,16 @@ function ProductSearchContent() {
           {/* Product List */}
           <ProductList products={products} isLoading={isLoading} />
 
-          {/* TODO: Add pagination or infinite scroll */}
-          {result.data?.page?.hasNext && (
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => {
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.set('page', String(page + 1));
-                  window.history.pushState(null, '', `?${params.toString()}`);
-                }}
-                className="px-4 py-2 text-sm text-indigo-600 hover:text-indigo-700"
-              >
-                더보기
-              </button>
-            </div>
-          )}
+          {/* Load More Trigger */}
+          <div ref={loadMoreRef} className="py-8 flex justify-center">
+            {isFetchingNextPage ? (
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            ) : hasNextPage ? (
+              <div className="h-4" /> // Ghost element to trigger observer
+            ) : products.length > 0 ? (
+              <p className="text-sm text-muted-foreground">모든 상품을 불러왔습니다.</p>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

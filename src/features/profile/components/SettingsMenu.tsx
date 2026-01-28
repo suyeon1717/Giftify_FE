@@ -26,14 +26,8 @@ interface SettingItem {
 export function SettingsMenu() {
     const router = useRouter();
 
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'GET' });
-            router.push('/');
-            router.refresh();
-        } catch (error) {
-            console.error('Logout failed:', error);
-        }
+    const handleLogout = () => {
+        window.location.href = '/auth/logout';
     };
 
     const settings: SettingItem[] = [

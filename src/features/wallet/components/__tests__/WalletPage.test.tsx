@@ -1,7 +1,41 @@
 import { render, screen } from '@/test/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import WalletPage from '@/app/wallet/page';
 import type { Wallet, WalletTransaction } from '@/types/wallet';
+
+// Mock UI components
+vi.mock('@/components/layout/AppShell', () => ({
+    AppShell: ({ children, headerTitle }: any) => (
+        <div data-testid="app-shell">
+            <h1>{headerTitle}</h1>
+            {children}
+        </div>
+    ),
+}));
+
+// Mock useWallet hooks
+vi.mock('@/features/wallet/hooks/useWallet', () => ({
+    useWallet: vi.fn(),
+    useWalletHistory: vi.fn(),
+}));
+
+// Mock useWalletMutations
+vi.mock('@/features/wallet/hooks/useWalletMutations', () => ({
+    useChargeWallet: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+    })),
+}));
+
+// Setup mock for toast
+vi.mock('sonner', () => ({
+    toast: {
+        success: vi.fn(),
+        error: vi.fn(),
+    },
+}));
+
+import WalletPage from '@/app/wallet/page';
+import { useWallet, useWalletHistory } from '@/features/wallet/hooks/useWallet';
 
 const mockWallet: Wallet = {
     id: 'w1',
@@ -32,45 +66,25 @@ const mockTransactions: WalletTransaction[] = [
     },
 ];
 
-// Mock UI components
-vi.mock('@/components/layout/AppShell', () => ({
-    AppShell: ({ children, headerTitle }: any) => (
-        <div data-testid="app-shell">
-            <h1>{headerTitle}</h1>
-            {children}
-        </div>
-    ),
-}));
-
-// Mock useWallet hooks
-vi.mock('@/features/wallet/hooks/useWallet', () => ({
-    useWallet: () => ({
-        data: mockWallet,
-        isLoading: false,
-        error: null,
-    }),
-    useWalletHistory: () => ({
-        data: {
-            content: mockTransactions,
-            items: mockTransactions,
-            page: { page: 0, size: 20, totalElements: 2, totalPages: 1, hasNext: false, hasPrevious: false }
-        },
-        isLoading: false,
-        error: null,
-    }),
-}));
-
-// Setup mock for toast
-vi.mock('sonner', () => ({
-    toast: {
-        success: vi.fn(),
-        error: vi.fn(),
-    },
-}));
-
 describe('WalletPage Feature', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+
+        (useWallet as any).mockReturnValue({
+            data: mockWallet,
+            isLoading: false,
+            error: null,
+        });
+
+        (useWalletHistory as any).mockReturnValue({
+            data: {
+                content: mockTransactions,
+                items: mockTransactions,
+                page: { page: 0, size: 20, totalElements: 2, totalPages: 1, hasNext: false, hasPrevious: false }
+            },
+            isLoading: false,
+            error: null,
+        });
     });
 
     it('GIVEN wallet page, THEN it should display balance', () => {
