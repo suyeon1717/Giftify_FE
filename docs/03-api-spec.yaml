@@ -1,0 +1,1893 @@
+openapi: 3.0.3
+info:
+  title: Giftify API
+  description: |
+    # Giftify - 그룹 펀딩 서비스 API
+    
+    ## 개요
+    Giftify는 친구들이 함께 선물을 구매할 수 있는 그룹 펀딩 서비스입니다.
+    
+    ## 인증
+    모든 API는 Auth0 JWT 토큰을 통해 인증됩니다.
+    - Header: `Authorization: Bearer {token}`
+    - Auth0 Audience: `https://api.giftify.app`
+    
+    ## 에러 응답
+    모든 에러는 표준화된 형식으로 반환됩니다:
+    ```json
+    {
+      "code": "ERROR_CODE",
+      "message": "사용자 친화적 메시지",
+      "details": { }
+    }
+    ```
+    
+    ## 환경
+    - Production: `https://api.giftify.app`
+    - Staging: `https://api-staging.giftify.app`
+    - Development: `https://api-dev.giftify.app`
+    
+  version: 1.0.0
+  contact:
+    name: TEAM 201
+    email: team201@giftify.app
+
+servers:
+  - url: https://api.giftify.app
+    description: Production
+  - url: https://api-staging.giftify.app
+    description: Staging
+  - url: https://api-dev.giftify.app
+    description: Development
+  - url: http://localhost:8080
+    description: Local
+
+tags:
+  - name: Auth
+    description: 인증 관련 API
+  - name: Members
+    description: 회원 관리 API
+  - name: Wishlists
+    description: 위시리스트 관리 API
+  - name: Products
+    description: 상품 조회 API
+  - name: Fundings
+    description: 펀딩 관리 API
+  - name: Cart
+    description: 장바구니 API
+  - name: Orders
+    description: 주문 API
+  - name: Payments
+    description: 결제 API
+  - name: Wallet
+    description: 지갑 API
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ============================================
+  # AUTH
+  # ============================================
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: 로그인 (세션 생성)
+      description: |
+        Auth0 토큰을 검증하고 서버 세션을 생성합니다.
+        최초 로그인 시 회원 정보가 자동으로 생성됩니다.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - idToken
+              properties:
+                idToken:
+                  type: string
+                  description: Auth0 ID Token
+                  example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: 로그인 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: 로그아웃
+      description: 서버 세션을 종료합니다.
+      operationId: logout
+      responses:
+        '204':
+          description: 로그아웃 성공
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: 현재 사용자 정보
+      description: 현재 로그인한 사용자의 정보를 반환합니다.
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================
+  # MEMBERS
+  # ============================================
+  /api/members/{memberId}:
+    get:
+      tags: [Members]
+      summary: 회원 조회
+      description: 특정 회원의 공개 정보를 조회합니다.
+      operationId: getMember
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberPublic'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Members]
+      summary: 회원 정보 수정
+      description: |
+        본인의 회원 정보를 수정합니다.
+        - 닉네임, 프로필 이미지 등 수정 가능
+        - 본인만 수정 가능
+      operationId: updateMember
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberUpdateRequest'
+      responses:
+        '200':
+          description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/members/{memberId}/friends:
+    get:
+      tags: [Members]
+      summary: 친구 목록 조회
+      description: 회원의 친구 목록을 조회합니다.
+      operationId: getFriends
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberListResponse'
+
+  # ============================================
+  # WISHLISTS
+  # ============================================
+  /api/wishlists/me:
+    get:
+      tags: [Wishlists]
+      summary: 내 위시리스트 조회
+      description: 현재 로그인한 사용자의 위시리스트를 조회합니다.
+      operationId: getMyWishlist
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wishlist'
+
+  /api/wishlists/{memberId}:
+    get:
+      tags: [Wishlists]
+      summary: 회원 위시리스트 조회
+      description: |
+        특정 회원의 위시리스트를 조회합니다.
+        - 공개 설정에 따라 접근 제한
+        - 비공개 위시리스트는 본인만 조회 가능
+      operationId: getMemberWishlist
+      parameters:
+        - $ref: '#/components/parameters/MemberId'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wishlist'
+        '403':
+          description: 접근 권한 없음 (비공개 위시리스트)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/wishlists/visibility:
+    patch:
+      tags: [Wishlists]
+      summary: 위시리스트 공개 설정 변경
+      description: 내 위시리스트의 공개 범위를 변경합니다.
+      operationId: updateWishlistVisibility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - visibility
+              properties:
+                visibility:
+                  $ref: '#/components/schemas/WishlistVisibility'
+      responses:
+        '200':
+          description: 변경 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wishlist'
+
+  /api/wishlists/items:
+    post:
+      tags: [Wishlists]
+      summary: 위시 아이템 추가
+      description: 내 위시리스트에 상품을 추가합니다.
+      operationId: addWishItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WishItemCreateRequest'
+      responses:
+        '201':
+          description: 추가 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WishItem'
+        '400':
+          description: 잘못된 요청 (이미 추가된 상품 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 상품을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/wishlists/items/{itemId}:
+    delete:
+      tags: [Wishlists]
+      summary: 위시 아이템 삭제
+      description: |
+        위시리스트에서 아이템을 삭제합니다.
+        - 펀딩 진행 중인 아이템은 삭제 불가
+      operationId: deleteWishItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 위시 아이템 ID
+      responses:
+        '204':
+          description: 삭제 성공
+        '400':
+          description: 삭제 불가 (펀딩 진행 중)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # PRODUCTS
+  # ============================================
+  /api/products:
+    get:
+      tags: [Products]
+      summary: 상품 목록 조회
+      description: 상품 목록을 조회합니다. 필터링 및 정렬을 지원합니다.
+      operationId: getProducts
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: 카테고리 필터
+        - name: minPrice
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          description: 최소 가격
+        - name: maxPrice
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          description: 최대 가격
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [popular, newest, price_asc, price_desc]
+            default: popular
+          description: 정렬 기준
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+  /api/products/search:
+    get:
+      tags: [Products]
+      summary: 상품 검색
+      description: 키워드로 상품을 검색합니다.
+      operationId: searchProducts
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: 검색 키워드
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: 카테고리 필터
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+  /api/products/popular:
+    get:
+      tags: [Products]
+      summary: 인기 상품 조회
+      description: 인기 상품 목록을 조회합니다.
+      operationId: getPopularProducts
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 8
+          description: 조회 개수
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+
+  /api/products/{productId}:
+    get:
+      tags: [Products]
+      summary: 상품 상세 조회
+      description: 상품의 상세 정보를 조회합니다.
+      operationId: getProduct
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 상품 ID
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # FUNDINGS
+  # ============================================
+  /api/fundings:
+    get:
+      tags: [Fundings]
+      summary: 펀딩 목록 조회
+      description: 공개된 펀딩 목록을 조회합니다.
+      operationId: getFundings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [IN_PROGRESS, ACHIEVED, ACCEPTED, EXPIRED, CLOSED]
+          description: 펀딩 상태 필터
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingListResponse'
+
+    post:
+      tags: [Fundings]
+      summary: 펀딩 개설
+      description: |
+        새로운 펀딩을 개설합니다.
+        - 위시 아이템을 기반으로 펀딩 생성
+        - 생성 즉시 PENDING 상태
+        - 결제 완료 시 IN_PROGRESS로 전환
+      operationId: createFunding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FundingCreateRequest'
+      responses:
+        '201':
+          description: 펀딩 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Funding'
+        '400':
+          description: 생성 실패 (이미 펀딩 중인 아이템 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/fundings/{fundingId}:
+    get:
+      tags: [Fundings]
+      summary: 펀딩 상세 조회
+      description: 펀딩의 상세 정보를 조회합니다.
+      operationId: getFunding
+      parameters:
+        - $ref: '#/components/parameters/FundingId'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/fundings/{fundingId}/accept:
+    post:
+      tags: [Fundings]
+      summary: 펀딩 수령 확정
+      description: |
+        펀딩 수령을 확정합니다.
+        - ACHIEVED 상태의 펀딩만 확정 가능
+        - 수령자 본인만 확정 가능
+        - 확정 시 정산 프로세스 시작
+      operationId: acceptFunding
+      parameters:
+        - $ref: '#/components/parameters/FundingId'
+      responses:
+        '200':
+          description: 수령 확정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Funding'
+        '400':
+          description: 확정 불가 (상태 오류)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/fundings/{fundingId}/refuse:
+    post:
+      tags: [Fundings]
+      summary: 펀딩 수령 거절
+      description: |
+        펀딩 수령을 거절합니다.
+        - ACHIEVED 상태의 펀딩만 거절 가능
+        - 수령자 본인만 거절 가능
+        - 거절 시 참여자 전원 환불
+      operationId: refuseFunding
+      parameters:
+        - $ref: '#/components/parameters/FundingId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: 거절 사유 (선택)
+      responses:
+        '200':
+          description: 거절 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Funding'
+        '400':
+          description: 거절 불가 (상태 오류)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/fundings/{fundingId}/participants:
+    get:
+      tags: [Fundings]
+      summary: 펀딩 참여자 목록
+      description: 펀딩의 전체 참여자 목록을 조회합니다.
+      operationId: getFundingParticipants
+      parameters:
+        - $ref: '#/components/parameters/FundingId'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantListResponse'
+
+  /api/fundings/my/organized:
+    get:
+      tags: [Fundings]
+      summary: 내가 개설한 펀딩
+      description: 현재 사용자가 개설한 펀딩 목록을 조회합니다.
+      operationId: getMyOrganizedFundings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, IN_PROGRESS, ACHIEVED, ACCEPTED, REFUSED, EXPIRED, CLOSED]
+          description: 펀딩 상태 필터
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingListResponse'
+
+  /api/fundings/my/participated:
+    get:
+      tags: [Fundings]
+      summary: 내가 참여한 펀딩
+      description: 현재 사용자가 참여한 펀딩 목록을 조회합니다.
+      operationId: getMyParticipatedFundings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [IN_PROGRESS, ACHIEVED, ACCEPTED, REFUSED, EXPIRED, CLOSED]
+          description: 펀딩 상태 필터
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingListResponse'
+
+  /api/fundings/my/received:
+    get:
+      tags: [Fundings]
+      summary: 내가 받은 펀딩
+      description: 현재 사용자가 수령자인 펀딩 목록을 조회합니다.
+      operationId: getMyReceivedFundings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [IN_PROGRESS, ACHIEVED, ACCEPTED, REFUSED, EXPIRED, CLOSED]
+          description: 펀딩 상태 필터
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundingListResponse'
+
+  # ============================================
+  # CART
+  # ============================================
+  /api/cart:
+    get:
+      tags: [Cart]
+      summary: 장바구니 조회
+      description: 현재 사용자의 장바구니를 조회합니다.
+      operationId: getCart
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+
+  /api/cart/items:
+    post:
+      tags: [Cart]
+      summary: 장바구니 추가
+      description: |
+        펀딩을 장바구니에 추가합니다.
+        - 기존 펀딩 참여: fundingId + amount
+        - 새 펀딩 개설: wishItemId + amount (Funding 자동 생성)
+      operationId: addCartItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemCreateRequest'
+      responses:
+        '201':
+          description: 추가 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItem'
+        '400':
+          description: 추가 실패 (이미 장바구니에 있음 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/cart/items/{itemId}:
+    patch:
+      tags: [Cart]
+      summary: 장바구니 아이템 수정
+      description: 장바구니 아이템의 금액 또는 선택 상태를 수정합니다.
+      operationId: updateCartItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 장바구니 아이템 ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemUpdateRequest'
+      responses:
+        '200':
+          description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItem'
+        '400':
+          description: 수정 실패 (금액 초과 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Cart]
+      summary: 장바구니 아이템 삭제
+      description: 장바구니에서 아이템을 삭제합니다.
+      operationId: deleteCartItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 장바구니 아이템 ID
+      responses:
+        '204':
+          description: 삭제 성공
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/cart/clear:
+    delete:
+      tags: [Cart]
+      summary: 장바구니 비우기
+      description: 장바구니의 모든 아이템을 삭제합니다.
+      operationId: clearCart
+      responses:
+        '204':
+          description: 비우기 성공
+
+  # ============================================
+  # ORDERS
+  # ============================================
+  /api/orders:
+    get:
+      tags: [Orders]
+      summary: 주문 내역 조회
+      description: 현재 사용자의 주문 내역을 조회합니다.
+      operationId: getOrders
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+
+    post:
+      tags: [Orders]
+      summary: 주문 생성
+      description: |
+        장바구니의 선택된 아이템으로 주문을 생성합니다.
+        - 선택된 아이템만 주문에 포함
+        - 주문 생성 후 결제 API 호출 필요
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+      responses:
+        '201':
+          description: 주문 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: 주문 생성 실패 (선택된 아이템 없음 등)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: 주문 상세 조회
+      description: 주문의 상세 정보를 조회합니다.
+      operationId: getOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 주문 ID
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # PAYMENTS
+  # ============================================
+  /api/payments:
+    post:
+      tags: [Payments]
+      summary: 결제 요청
+      description: |
+        주문에 대한 결제를 요청합니다.
+        
+        **MVP 결제 흐름:**
+        1. 지갑 잔액 확인
+        2. 잔액 부족 시 에러 반환
+        3. 잔액 충분 시 즉시 차감 및 결제 완료
+        
+        **결제 완료 시:**
+        - PENDING 펀딩 → IN_PROGRESS로 전환
+        - FundingParticipant 생성
+      operationId: createPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+      responses:
+        '200':
+          description: 결제 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResult'
+        '400':
+          description: 결제 실패
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - type: object
+                    properties:
+                      code:
+                        example: "PAYMENT_001"
+                      walletBalance:
+                        type: integer
+                        description: 현재 지갑 잔액 (잔액 부족 시)
+                      requiredAmount:
+                        type: integer
+                        description: 필요 금액 (잔액 부족 시)
+
+  /api/payments/{paymentId}:
+    get:
+      tags: [Payments]
+      summary: 결제 상태 조회
+      description: 결제의 상태를 조회합니다.
+      operationId: getPayment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: 결제 ID
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================
+  # WALLET
+  # ============================================
+  /api/wallet:
+    get:
+      tags: [Wallet]
+      summary: 지갑 잔액 조회
+      description: 현재 사용자의 지갑 잔액을 조회합니다.
+      operationId: getWallet
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+
+  /api/wallet/charge:
+    post:
+      tags: [Wallet]
+      summary: 지갑 충전 요청
+      description: |
+        토스페이먼츠를 통해 지갑을 충전합니다.
+        
+        **충전 흐름:**
+        1. 충전 요청 → 토스페이먼츠 결제창 URL 반환
+        2. 사용자가 결제창에서 결제 완료
+        3. 웹훅을 통해 충전 완료 처리
+      operationId: chargeWallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletChargeRequest'
+      responses:
+        '200':
+          description: 충전 요청 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletChargeResponse'
+        '400':
+          description: 충전 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/wallet/history:
+    get:
+      tags: [Wallet]
+      summary: 지갑 거래 내역
+      description: 지갑의 입출금 내역을 조회합니다.
+      operationId: getWalletHistory
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [CHARGE, PAYMENT, REFUND]
+          description: 거래 유형 필터
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletHistoryResponse'
+
+  # ============================================
+  # HOME (Aggregated)
+  # ============================================
+  /api/home:
+    get:
+      tags: [Members]
+      summary: 홈 화면 데이터
+      description: |
+        홈 화면에 필요한 데이터를 일괄 조회합니다.
+        - 내 정보
+        - 참여 중인 펀딩 (최대 10개)
+        - 친구 위시리스트 (최대 5개)
+        - 인기 상품 (최대 8개)
+      operationId: getHomeData
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeData'
+
+  # ============================================
+  # FRIENDS WISHLISTS
+  # ============================================
+  /api/friends/wishlists:
+    get:
+      tags: [Wishlists]
+      summary: 친구 위시리스트 목록
+      description: 친구들의 공개된 위시리스트 목록을 조회합니다.
+      operationId: getFriendsWishlists
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+          description: 조회 개수
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendWishlistListResponse'
+
+# ============================================
+# COMPONENTS
+# ============================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Auth0 JWT Token
+
+  parameters:
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 회원 ID
+
+    FundingId:
+      name: fundingId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 펀딩 ID
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: 페이지 번호 (0부터 시작)
+
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: 페이지 크기
+
+  responses:
+    Unauthorized:
+      description: 인증 필요
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: "AUTH_001"
+            message: "인증이 필요합니다."
+
+    Forbidden:
+      description: 권한 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: "AUTH_003"
+            message: "접근 권한이 없습니다."
+
+    NotFound:
+      description: 리소스를 찾을 수 없음
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: "RESOURCE_001"
+            message: "요청한 리소스를 찾을 수 없습니다."
+
+  schemas:
+    # ============================================
+    # Common
+    # ============================================
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: 에러 코드
+          example: "ERROR_001"
+        message:
+          type: string
+          description: 에러 메시지
+          example: "요청을 처리할 수 없습니다."
+        details:
+          type: object
+          additionalProperties: true
+          description: 추가 에러 정보
+
+    PageInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: 현재 페이지
+        size:
+          type: integer
+          description: 페이지 크기
+        totalElements:
+          type: integer
+          format: int64
+          description: 전체 요소 수
+        totalPages:
+          type: integer
+          description: 전체 페이지 수
+        hasNext:
+          type: boolean
+          description: 다음 페이지 존재 여부
+        hasPrevious:
+          type: boolean
+          description: 이전 페이지 존재 여부
+
+    # ============================================
+    # Auth
+    # ============================================
+    LoginResponse:
+      type: object
+      properties:
+        member:
+          $ref: '#/components/schemas/Member'
+        isNewUser:
+          type: boolean
+          description: 신규 가입 여부
+
+    # ============================================
+    # Member
+    # ============================================
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        authSub:
+          type: string
+          description: Auth0 Subject
+        nickname:
+          type: string
+          example: "찬구"
+        email:
+          type: string
+          format: email
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        role:
+          type: string
+          enum: [USER, SELLER]
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED, WITHDRAWN]
+        createdAt:
+          type: string
+          format: date-time
+
+    MemberPublic:
+      type: object
+      description: 다른 사용자에게 공개되는 정보
+      properties:
+        id:
+          type: string
+          format: uuid
+        nickname:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+
+    MemberUpdateRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+          minLength: 2
+          maxLength: 20
+        avatarUrl:
+          type: string
+          format: uri
+
+    MemberListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberPublic'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    # ============================================
+    # Wishlist
+    # ============================================
+    WishlistVisibility:
+      type: string
+      enum: [PUBLIC, FRIENDS_ONLY, PRIVATE]
+      description: |
+        - PUBLIC: 전체 공개
+        - FRIENDS_ONLY: 친구만 공개
+        - PRIVATE: 비공개
+
+    Wishlist:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        member:
+          $ref: '#/components/schemas/MemberPublic'
+        visibility:
+          $ref: '#/components/schemas/WishlistVisibility'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WishItem'
+        itemCount:
+          type: integer
+
+    WishItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        wishlistId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        product:
+          $ref: '#/components/schemas/Product'
+        status:
+          type: string
+          enum: [AVAILABLE, IN_FUNDING, FUNDED]
+          description: |
+            - AVAILABLE: 펀딩 가능
+            - IN_FUNDING: 펀딩 진행 중
+            - FUNDED: 펀딩 완료
+        fundingId:
+          type: string
+          format: uuid
+          nullable: true
+          description: IN_FUNDING 상태일 때 펀딩 ID
+        createdAt:
+          type: string
+          format: date-time
+
+    WishItemCreateRequest:
+      type: object
+      required:
+        - productId
+      properties:
+        productId:
+          type: string
+          format: uuid
+
+    FriendWishlistListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              member:
+                $ref: '#/components/schemas/MemberPublic'
+              wishlist:
+                $ref: '#/components/schemas/Wishlist'
+              previewItems:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WishItem'
+                maxItems: 3
+
+    # ============================================
+    # Product
+    # ============================================
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "에어팟 프로 2세대"
+        price:
+          type: integer
+          description: 가격 (원)
+          example: 329000
+        imageUrl:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum: [PENDING, ON_SALE, REJECTED, DISCONTINUED]
+
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          properties:
+            sellerId:
+              type: string
+              format: uuid
+            description:
+              type: string
+            images:
+              type: array
+              items:
+                type: string
+                format: uri
+            stock:
+              type: integer
+            category:
+              type: string
+            rating:
+              type: number
+              format: float
+            reviewCount:
+              type: integer
+            salesCount:
+              type: integer
+            createdAt:
+              type: string
+              format: date-time
+
+    ProductListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    # ============================================
+    # Funding
+    # ============================================
+    FundingStatus:
+      type: string
+      enum: [PENDING, IN_PROGRESS, ACHIEVED, ACCEPTED, REFUSED, EXPIRED, CLOSED]
+      description: |
+        - PENDING: 개설 대기 (결제 전)
+        - IN_PROGRESS: 진행 중
+        - ACHIEVED: 목표 달성 (수령 대기)
+        - ACCEPTED: 수령 확정
+        - REFUSED: 수령 거절
+        - EXPIRED: 기한 만료
+        - CLOSED: 종료
+
+    Funding:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        wishItemId:
+          type: string
+          format: uuid
+        product:
+          $ref: '#/components/schemas/Product'
+        organizerId:
+          type: string
+          format: uuid
+        organizer:
+          $ref: '#/components/schemas/MemberPublic'
+        recipientId:
+          type: string
+          format: uuid
+        recipient:
+          $ref: '#/components/schemas/MemberPublic'
+        targetAmount:
+          type: integer
+          description: 목표 금액
+        currentAmount:
+          type: integer
+          description: 현재 모인 금액
+        status:
+          $ref: '#/components/schemas/FundingStatus'
+        participantCount:
+          type: integer
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    FundingDetail:
+      allOf:
+        - $ref: '#/components/schemas/Funding'
+        - type: object
+          properties:
+            participants:
+              type: array
+              items:
+                $ref: '#/components/schemas/FundingParticipant'
+              description: 최근 참여자 (최대 5명)
+            myParticipation:
+              $ref: '#/components/schemas/FundingParticipant'
+              nullable: true
+              description: 내 참여 정보 (참여한 경우)
+
+    FundingParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fundingId:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        member:
+          $ref: '#/components/schemas/MemberPublic'
+        amount:
+          type: integer
+          description: 참여 금액
+        isOrganizer:
+          type: boolean
+          description: 개설자 여부
+        participatedAt:
+          type: string
+          format: date-time
+
+    FundingCreateRequest:
+      type: object
+      required:
+        - wishItemId
+      properties:
+        wishItemId:
+          type: string
+          format: uuid
+          description: 위시 아이템 ID
+        expiresInDays:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 14
+          description: 펀딩 기한 (일)
+        message:
+          type: string
+          maxLength: 500
+          description: 펀딩 메시지 (선택)
+
+    FundingListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Funding'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    ParticipantListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FundingParticipant'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    # ============================================
+    # Cart
+    # ============================================
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        selectedCount:
+          type: integer
+          description: 선택된 아이템 수
+        totalAmount:
+          type: integer
+          description: 선택된 아이템 총 금액
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cartId:
+          type: string
+          format: uuid
+        fundingId:
+          type: string
+          format: uuid
+        funding:
+          $ref: '#/components/schemas/Funding'
+        amount:
+          type: integer
+          description: 참여 금액
+        selected:
+          type: boolean
+          description: 선택 여부
+        isNewFunding:
+          type: boolean
+          description: 새 펀딩 개설 여부 (PENDING 상태)
+        createdAt:
+          type: string
+          format: date-time
+
+    CartItemCreateRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        fundingId:
+          type: string
+          format: uuid
+          description: 기존 펀딩 참여 시
+        wishItemId:
+          type: string
+          format: uuid
+          description: 새 펀딩 개설 시
+        amount:
+          type: integer
+          minimum: 0
+          description: 참여 금액 (0원 가능)
+
+    CartItemUpdateRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+          minimum: 0
+          description: 참여 금액
+        selected:
+          type: boolean
+          description: 선택 여부
+
+    # ============================================
+    # Order
+    # ============================================
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        totalAmount:
+          type: integer
+        itemCount:
+          type: integer
+        isPaid:
+          type: boolean
+          description: 결제 완료 여부
+        createdAt:
+          type: string
+          format: date-time
+
+    OrderDetail:
+      allOf:
+        - $ref: '#/components/schemas/Order'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+            payment:
+              $ref: '#/components/schemas/Payment'
+              nullable: true
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        fundingId:
+          type: string
+          format: uuid
+        funding:
+          $ref: '#/components/schemas/Funding'
+        amount:
+          type: integer
+          description: 참여 금액
+
+    OrderCreateRequest:
+      type: object
+      properties:
+        cartItemIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: 주문할 장바구니 아이템 ID 목록 (생략 시 선택된 아이템)
+
+    OrderListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    # ============================================
+    # Payment
+    # ============================================
+    PaymentStatus:
+      type: string
+      enum: [PENDING, PAID, FAILED, CANCELED, REFUNDED, RECEIVED]
+      description: |
+        - PENDING: 결제 대기
+        - PAID: 결제 완료
+        - FAILED: 결제 실패
+        - CANCELED: 결제 취소
+        - REFUNDED: 환불 완료
+        - RECEIVED: 수령 확정 (펀딩)
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [FUNDING, POINT_CHARGE]
+        method:
+          type: string
+          enum: [WALLET, TOSS_PAYMENTS]
+        originAmount:
+          type: integer
+          description: 원래 금액
+        paidAmount:
+          type: integer
+          description: 실제 결제 금액
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        createdAt:
+          type: string
+          format: date-time
+
+    PaymentCreateRequest:
+      type: object
+      required:
+        - orderId
+        - method
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        method:
+          type: string
+          enum: [WALLET]
+          description: 결제 수단 (MVP는 WALLET만 지원)
+
+    PaymentResult:
+      type: object
+      properties:
+        payment:
+          $ref: '#/components/schemas/Payment'
+        order:
+          $ref: '#/components/schemas/OrderDetail'
+        walletBalance:
+          type: integer
+          description: 결제 후 지갑 잔액
+        fundingResults:
+          type: array
+          items:
+            type: object
+            properties:
+              fundingId:
+                type: string
+                format: uuid
+              previousAmount:
+                type: integer
+              currentAmount:
+                type: integer
+              previousProgress:
+                type: number
+                format: float
+              currentProgress:
+                type: number
+                format: float
+              isAchieved:
+                type: boolean
+
+    # ============================================
+    # Wallet
+    # ============================================
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        balance:
+          type: integer
+          description: 잔액 (원)
+
+    WalletChargeRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: integer
+          minimum: 1000
+          maximum: 10000000
+          description: 충전 금액 (최소 1,000원)
+
+    WalletChargeResponse:
+      type: object
+      properties:
+        chargeId:
+          type: string
+          format: uuid
+          description: 충전 요청 ID
+        paymentUrl:
+          type: string
+          format: uri
+          description: 토스페이먼츠 결제창 URL
+        amount:
+          type: integer
+
+    WalletTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [CHARGE, PAYMENT, REFUND]
+        amount:
+          type: integer
+          description: 금액 (양수: 입금, 음수: 출금)
+        balanceAfter:
+          type: integer
+          description: 거래 후 잔액
+        description:
+          type: string
+          description: 거래 설명
+        relatedId:
+          type: string
+          format: uuid
+          nullable: true
+          description: 관련 결제/펀딩 ID
+        createdAt:
+          type: string
+          format: date-time
+
+    WalletHistoryResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WalletTransaction'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    # ============================================
+    # Home
+    # ============================================
+    HomeData:
+      type: object
+      properties:
+        member:
+          $ref: '#/components/schemas/Member'
+        myFundings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Funding'
+          description: 참여 중인 펀딩 (최대 10개)
+        friendsWishlists:
+          type: array
+          items:
+            type: object
+            properties:
+              member:
+                $ref: '#/components/schemas/MemberPublic'
+              wishlist:
+                $ref: '#/components/schemas/Wishlist'
+              previewItems:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WishItem'
+                maxItems: 3
+        popularProducts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+          description: 인기 상품 (최대 8개)
+        walletBalance:
+          type: integer
+          description: 지갑 잔액
