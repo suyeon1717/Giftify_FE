@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -10,15 +8,14 @@ import {
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Globe, Users, Lock, ChevronDown, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-export type Visibility = 'PUBLIC' | 'FRIENDS' | 'PRIVATE';
+import { WishlistVisibility } from '@/types/wishlist';
+import { LucideIcon } from 'lucide-react';
 
 interface WishlistHeaderProps {
     isOwner: boolean;
     itemCount: number;
-    visibility: Visibility;
-    onVisibilityChange?: (v: Visibility) => void;
+    visibility: WishlistVisibility;
+    onVisibilityChange?: () => void;
     ownerName?: string;
 }
 
@@ -30,9 +27,9 @@ export function WishlistHeader({
     ownerName
 }: WishlistHeaderProps) {
 
-    const visibilityConfig = {
+    const visibilityConfig: Record<WishlistVisibility, { icon: LucideIcon; label: string }> = {
         PUBLIC: { icon: Globe, label: '전체 공개' },
-        FRIENDS: { icon: Users, label: '친구만 공개' },
+        FRIENDS_ONLY: { icon: Users, label: '친구만 공개' },
         PRIVATE: { icon: Lock, label: '비공개' },
     };
 
@@ -52,14 +49,8 @@ export function WishlistHeader({
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => onVisibilityChange?.('PUBLIC')}>
-                                <Globe className="mr-2 h-4 w-4" /> 전체 공개
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onVisibilityChange?.('FRIENDS')}>
-                                <Users className="mr-2 h-4 w-4" /> 친구만 공개
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onVisibilityChange?.('PRIVATE')}>
-                                <Lock className="mr-2 h-4 w-4" /> 비공개
+                            <DropdownMenuItem onClick={onVisibilityChange}>
+                                <Globe className="mr-2 h-4 w-4" /> 공개 설정 변경
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

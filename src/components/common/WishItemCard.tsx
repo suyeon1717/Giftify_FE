@@ -5,8 +5,19 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FundingProgress } from './FundingProgress';
-import { Gift, ChevronRight } from 'lucide-react';
+import { Gift, ChevronRight, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export type WishItemStatus = 'AVAILABLE' | 'IN_FUNDING' | 'FUNDED';
 
@@ -30,8 +41,9 @@ export interface WishItemCardProps {
         fundedAt?: string;
         addedAt: string;
     };
-    isOwner?: boolean; // If true, shows 'Start Funding' for AVAILABLE
-    onAction?: () => void; // Main action (Start Funding, View Funding, etc.)
+    isOwner?: boolean;
+    onAction?: () => void;
+    onDelete?: () => void;
     className?: string;
 }
 
@@ -39,6 +51,7 @@ export function WishItemCard({
     item,
     isOwner = false,
     onAction,
+    onDelete,
     className,
 }: WishItemCardProps) {
     const isFunded = item.status === 'FUNDED';
@@ -59,7 +72,7 @@ export function WishItemCard({
                 {/* Content */}
                 <div className="flex flex-1 flex-col justify-between">
                     <div className="flex justify-between items-start gap-2">
-                        <div>
+                        <div className="flex-1">
                             <h3 className={cn("text-base font-medium line-clamp-1", isFunded && "text-muted-foreground line-through")}>
                                 {item.product.name}
                             </h3>
@@ -67,12 +80,11 @@ export function WishItemCard({
                                 ₩{item.product.price.toLocaleString()}
                             </p>
                         </div>
-                        <div>
+                        <div className="flex flex-col items-end gap-1">
                             {item.status === 'AVAILABLE' && (
                                 <Badge variant="outline" className="text-muted-foreground">
-                                    D-xx
+                                    대기중
                                 </Badge>
-                                // Or just generic badge
                             )}
                             {item.status === 'IN_FUNDING' && (
                                 <Badge variant="secondary" className="text-indigo-600 bg-indigo-50">
@@ -81,8 +93,40 @@ export function WishItemCard({
                             )}
                             {item.status === 'FUNDED' && (
                                 <Badge className="bg-green-500">
-                                    🎉 펀딩완료
+                                    펀딩완료
                                 </Badge>
+                            )}
+                            {isOwner && onDelete && (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>위시 아이템 삭제</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                정말 이 아이템을 위시리스트에서 삭제하시겠습니까?
+                                                {item.status === 'IN_FUNDING' && (
+                                                    <span className="block mt-2 text-destructive font-medium">
+                                                        진행 중인 펀딩이 있는 아이템입니다. 삭제하면 펀딩에 영향을 줄 수 있습니다.
+                                                    </span>
+                                                )}
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>취소</AlertDialogCancel>
+                                            <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                                삭제
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             )}
                         </div>
                     </div>
@@ -93,10 +137,10 @@ export function WishItemCard({
                                 <span className="text-xs text-muted-foreground">
                                     추가: {new Date(item.addedAt).toLocaleDateString()}
                                 </span>
-                                {isOwner && (
+                                {onAction && (
                                     <Button size="sm" onClick={onAction} className="h-8 gap-1.5">
                                         <Gift className="h-4 w-4" />
-                                        펀딩 시작
+                                        {isOwner ? '펀딩 시작' : '펀딩 참여'}
                                     </Button>
                                 )}
                             </div>
@@ -111,9 +155,11 @@ export function WishItemCard({
                                         size="sm"
                                         className="flex-1"
                                     />
-                                    <Button variant="ghost" size="sm" onClick={onAction} className="h-6 p-0 text-muted-foreground hover:text-primary">
-                                        보기 <ChevronRight className="ml-1 h-3 w-3" />
-                                    </Button>
+                                    {onAction && (
+                                        <Button variant="ghost" size="sm" onClick={onAction} className="h-6 p-0 text-muted-foreground hover:text-primary">
+                                            보기 <ChevronRight className="ml-1 h-3 w-3" />
+                                        </Button>
+                                    )}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
                                     {Math.round((item.funding.currentAmount / item.funding.targetAmount) * 100)}% 달성 ({item.funding.participantCount}명 참여)
@@ -126,6 +172,9 @@ export function WishItemCard({
                                 <span className="text-xs text-muted-foreground">
                                     완료: {item.fundedAt ? new Date(item.fundedAt).toLocaleDateString() : '-'}
                                 </span>
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                    완료
+                                </Badge>
                             </div>
                         )}
                     </div>
