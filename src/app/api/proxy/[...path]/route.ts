@@ -33,7 +33,7 @@ async function proxyRequest(req: NextRequest, path: string[], method: string) {
     }
 
     const pathString = path.join('/');
-    const url = `${API_URL}/api/${pathString}${req.nextUrl.search}`;
+    const url = `${API_URL}/${pathString}${req.nextUrl.search}`;
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
