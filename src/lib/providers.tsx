@@ -5,6 +5,7 @@ import { Auth0Provider } from '@auth0/nextjs-auth0/client';
 import { Toaster } from 'sonner';
 import { useState } from 'react';
 import { ApiError } from '@/lib/api/client';
+import { AuthInitializer } from '@/features/auth/components/AuthInitializer';
 
 /**
  * Determines if an error is retryable
@@ -56,6 +57,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     return (
         <Auth0Provider>
+            <AuthInitializer />
             <QueryClientProvider client={queryClient}>
                 {children}
                 <Toaster

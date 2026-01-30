@@ -16,3 +16,23 @@ export async function logout(): Promise<void> {
 export async function getMe(): Promise<Member> {
   return apiClient.get<Member>('/api/auth/me');
 }
+
+/**
+ * Synchronize Auth0 session with Backend
+ * Calls the Next.js API route which forwards the ID Token to the backend.
+ */
+// Calls the Next.js API route (BFF) which forwards the ID Token to the backend.
+export async function sync(): Promise<LoginResponse> {
+  const response = await fetch('/api/auth/sync', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to sync session');
+  }
+
+  return response.json();
+}
