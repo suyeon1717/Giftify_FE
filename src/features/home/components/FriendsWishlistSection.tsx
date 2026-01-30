@@ -58,7 +58,7 @@ export function FriendsWishlistSection({ friendsWishlists }: FriendsWishlistSect
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                                 <Avatar>
                                     <AvatarImage src={item.member.avatarUrl || undefined} />
-                                    <AvatarFallback>{item.member.nickname[0]}</AvatarFallback>
+                                    <AvatarFallback>{(item.member.nickname || '알')[0]}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold truncate">

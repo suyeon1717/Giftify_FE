@@ -74,9 +74,7 @@ export function ParticipantsModal({ open, onOpenChange, fundingId }: Participant
                                 >
                                     <Avatar className="h-10 w-10">
                                         <AvatarImage src={participant.member.avatarUrl || undefined} />
-                                        <AvatarFallback>
-                                            {participant.member.nickname[0]}
-                                        </AvatarFallback>
+                                        <AvatarFallback>{(participant.member.nickname || '알')[0]}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">

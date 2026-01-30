@@ -92,11 +92,11 @@ export default function FundingDetailPage() {
                     <div className="flex items-center gap-3">
                         <Avatar>
                             <AvatarImage src={funding.recipient.avatarUrl || undefined} />
-                            <AvatarFallback>{funding.recipient.nickname[0]}</AvatarFallback>
+                            <AvatarFallback>{(funding.recipient.nickname || '알')[0]}</AvatarFallback>
                         </Avatar>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">To.</p>
-                            <p className="font-bold">{funding.recipient.nickname}</p>
+                            <p className="font-bold">{funding.recipient.nickname || '알 수 없음'}</p>
                         </div>
                     </div>
 
@@ -129,7 +129,7 @@ export default function FundingDetailPage() {
                                     <Avatar key={participant.id} className="border-2 border-background w-8 h-8">
                                         <AvatarImage src={participant.member.avatarUrl || undefined} />
                                         <AvatarFallback className="text-[10px]">
-                                            {participant.member.nickname[0]}
+                                            {(participant.member.nickname || '알')[0]}
                                         </AvatarFallback>
                                     </Avatar>
                                 ))}

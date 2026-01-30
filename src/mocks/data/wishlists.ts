@@ -26,7 +26,7 @@ export interface Wishlist {
   memberId: string;
   member: {
     id: string;
-    nickname: string;
+    nickname: string | null;
     avatarUrl: string | null;
   };
   visibility: WishlistVisibility;

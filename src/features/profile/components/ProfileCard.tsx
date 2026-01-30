@@ -22,16 +22,16 @@ export function ProfileCard({ member, onEditClick }: ProfileCardProps) {
                 <div className="flex items-center gap-4">
                     <Avatar size="lg" className="size-20">
                         {member.avatarUrl ? (
-                            <AvatarImage src={member.avatarUrl} alt={member.nickname} />
+                            <AvatarImage src={member.avatarUrl} alt={member.nickname || 'Avatar'} />
                         ) : (
                             <AvatarFallback className="text-lg">
-                                {getInitials(member.nickname)}
+                                {getInitials(member.nickname || '알 수 없음')}
                             </AvatarFallback>
                         )}
                     </Avatar>
 
                     <div className="flex-1">
-                        <h2 className="text-xl font-bold">{member.nickname}</h2>
+                        <h2 className="text-xl font-bold">{member.nickname || '알 수 없음'}</h2>
                         <p className="text-sm text-muted-foreground mt-1">
                             {member.email}
                         </p>

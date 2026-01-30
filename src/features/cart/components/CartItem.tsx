@@ -58,10 +58,10 @@ export function CartItem({ item, onUpdateAmount, onToggleSelect, onRemove }: Car
                             <div className="flex items-center gap-2">
                                 <Avatar className="h-5 w-5">
                                     <AvatarImage src={funding.recipient.avatarUrl || ''} />
-                                    <AvatarFallback>{funding.recipient.nickname[0]}</AvatarFallback>
+                                    <AvatarFallback>{(funding.recipient.nickname || '알')[0]}</AvatarFallback>
                                 </Avatar>
                                 <span className="text-xs text-muted-foreground">
-                                    {funding.recipient.nickname}
+                                    {funding.recipient.nickname || '알 수 없음'}
                                 </span>
                             </div>
                             <h3 className="font-medium text-sm line-clamp-2">{funding.product.name}</h3>

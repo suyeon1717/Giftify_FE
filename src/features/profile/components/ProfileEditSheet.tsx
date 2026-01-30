@@ -20,7 +20,7 @@ interface ProfileEditSheetProps {
 }
 
 function ProfileEditForm({ member, onCancel, onSuccess }: { member: Member; onCancel: () => void; onSuccess: () => void }) {
-    const [nickname, setNickname] = useState(member.nickname);
+    const [nickname, setNickname] = useState(member.nickname || '');
     const updateProfile = useUpdateProfile();
 
     const handleSave = async () => {

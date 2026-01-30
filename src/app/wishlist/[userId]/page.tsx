@@ -132,7 +132,7 @@ export default function FriendWishlistPage({ params }: FriendWishlistPageProps) 
                 isOwner={false}
                 itemCount={wishlist.itemCount}
                 visibility={wishlist.visibility}
-                ownerName={wishlist.member.nickname}
+                ownerName={wishlist.member.nickname || undefined}
             />
 
             <Separator />

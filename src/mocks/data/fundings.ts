@@ -23,13 +23,13 @@ export interface Funding {
   organizerId: string;
   organizer: {
     id: string;
-    nickname: string;
+    nickname: string | null;
     avatarUrl: string | null;
   };
   recipientId: string;
   recipient: {
     id: string;
-    nickname: string;
+    nickname: string | null;
     avatarUrl: string | null;
   };
   targetAmount: number;
@@ -46,7 +46,7 @@ export interface FundingParticipant {
   memberId: string;
   member: {
     id: string;
-    nickname: string;
+    nickname: string | null;
     avatarUrl: string | null;
   };
   amount: number;
