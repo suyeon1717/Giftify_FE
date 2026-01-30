@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { LoginButton } from '@/features/auth/components/LoginButton';
+import { SignupButton } from '@/features/auth/components/SignupButton';
 import { UserMenu } from '@/features/auth/components/UserMenu';
 
 export type HeaderVariant = 'main' | 'detail' | 'search';
@@ -159,7 +160,10 @@ function MainHeaderContent() {
                 ) : user ? (
                     <UserMenu />
                 ) : (
-                    <LoginButton />
+                    <div className="flex gap-2">
+                        <LoginButton />
+                        <SignupButton />
+                    </div>
                 )}
             </div>
         </div>

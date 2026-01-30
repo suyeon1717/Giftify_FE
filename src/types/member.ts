@@ -16,11 +16,14 @@ export type MemberStatus = 'ACTIVE' | 'SUSPENDED' | 'WITHDRAWN';
 export interface Member {
     id: string;
     authSub: string;
-    nickname: string;
+    nickname: string | null; // Make nickname nullable as per new requirements
     email: string;
     avatarUrl: string | null;
     role: MemberRole;
     status: MemberStatus;
+    birthday?: string; // ISO date string (YYYY-MM-DD)
+    address?: string;
+    phoneNum?: string;
     createdAt: string;
 }
 
@@ -29,16 +32,16 @@ export interface Member {
  */
 export interface MemberPublic {
     id: string;
-    nickname: string;
+    nickname: string | null;
     avatarUrl: string | null;
 }
 
-/**
- * Request body for updating member information
- */
 export interface MemberUpdateRequest {
     nickname?: string;
     avatarUrl?: string;
+    birthday?: string;
+    address?: string;
+    phoneNum?: string;
 }
 
 /**

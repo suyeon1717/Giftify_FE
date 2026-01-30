@@ -1,0 +1,341 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useUser } from '@auth0/nextjs-auth0/client';
+import DaumPostcode from 'react-daum-postcode';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+    FormDescription,
+} from '@/components/ui/form';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { updateMember } from '@/lib/api/members';
+import { getMe } from '@/lib/api/auth';
+import { Search } from 'lucide-react';
+
+const formSchema = z.object({
+    nickname: z
+        .string()
+        .max(20, { message: '닉네임은 20글자 이하여야 합니다.' })
+        .optional()
+        .or(z.literal('')),
+    birthday: z.string().optional().or(z.literal('')),
+    address: z.string().optional().or(z.literal('')),
+    detailAddress: z.string().optional().or(z.literal('')),
+    phoneNum: z
+        .string()
+        .regex(/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/, { message: '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)' })
+        .optional()
+        .or(z.literal('')),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+export default function CompleteSignupPage() {
+    const router = useRouter();
+    const { user, isLoading: isAuthLoading } = useUser();
+    const queryClient = useQueryClient();
+    const [progress, setProgress] = useState(0);
+    const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+
+    // Moved Hook: Generate a random example nickname for the placeholder
+    const [placeholderNickname, setPlaceholderNickname] = useState('');
+
+    useEffect(() => {
+        setPlaceholderNickname(`User_${Math.floor(1000 + Math.random() * 9000)}`);
+    }, []);
+
+    // Fetch current member info to get the ID
+    const { data: member, isLoading: isMemberLoading } = useQuery({
+        queryKey: ['me'],
+        queryFn: getMe,
+        enabled: !!user,
+        retry: false,
+    });
+
+    const form = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            nickname: '',
+            birthday: '',
+            address: '',
+            detailAddress: '',
+            phoneNum: '',
+        },
+    });
+
+    // Calculate filled fields for button state (Moved up to access form)
+    const filledFieldsCount = [
+        form.watch('nickname'),
+        form.watch('phoneNum'),
+        form.watch('birthday'),
+        form.watch('address'),
+        form.watch('detailAddress'),
+    ].filter(v => v && v.trim().length > 0).length;
+
+    // Calculate progress whenever form values change
+    useEffect(() => {
+        const subscription = form.watch((value) => {
+            let completedFields = 0;
+            const totalFields = 5; // Nickname, Birthday, Address (Main), Phone, Detail Address
+
+            if (value.nickname && value.nickname.trim().length > 0) completedFields++;
+            if (value.birthday && value.birthday.trim().length > 0) completedFields++;
+            if (value.address && value.address.trim().length > 0) completedFields++;
+            if (value.detailAddress && value.detailAddress.trim().length > 0) completedFields++;
+            if (value.phoneNum && value.phoneNum.trim().length > 0) completedFields++;
+
+            setProgress((completedFields / totalFields) * 100);
+        });
+        return () => subscription.unsubscribe();
+    }, [form.watch]);
+
+    // Pre-fill form if member data exists
+    useEffect(() => {
+        if (member) {
+            if (member.nickname) form.setValue('nickname', member.nickname);
+            if (member.birthday) form.setValue('birthday', member.birthday);
+            if (member.address) form.setValue('address', member.address);
+            if (member.phoneNum) form.setValue('phoneNum', member.phoneNum);
+            // Defaulting detailAddress from previous address splitting is tricky, 
+            // but we don't have detail separated in DB yet as per code, so leaving blank or extracted if logic existed.
+            // For now, no extraction logic. 
+        }
+    }, [member, form]);
+
+    const updateMutation = useMutation({
+        mutationFn: async (values: FormValues) => {
+            if (!member?.id) throw new Error('Member ID not found');
+
+            // Combine address and detailAddress
+            const fullAddress = values.address
+                ? `${values.address} ${values.detailAddress || ''}`.trim()
+                : undefined;
+
+            return updateMember(member.id, {
+                nickname: values.nickname || undefined,
+                birthday: values.birthday || undefined,
+                address: fullAddress,
+                phoneNum: values.phoneNum || undefined,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['me'] });
+            toast.success('프로필 설정이 완료되었습니다!');
+            router.push('/');
+        },
+        onError: (error) => {
+            console.error('Failed to update profile:', error);
+            toast.error('프로필 업데이트에 실패했습니다. 다시 시도해주세요.');
+        },
+    });
+
+    function onSubmit(values: FormValues) {
+        updateMutation.mutate(values);
+    }
+
+    const handleAddressComplete = (data: any) => {
+        let fullAddress = data.address;
+        let extraAddress = '';
+
+        if (data.addressType === 'R') {
+            if (data.bname !== '') {
+                extraAddress += data.bname;
+            }
+            if (data.buildingName !== '') {
+                extraAddress += (extraAddress !== '' ? `, ${data.buildingName}` : data.buildingName);
+            }
+            fullAddress += (extraAddress !== '' ? ` (${extraAddress})` : '');
+        }
+
+        form.setValue('address', fullAddress);
+        setIsAddressModalOpen(false); // Close modal
+    };
+
+    // Helper functions for button state
+    const totalFields = 5;
+    const isAllEmpty = filledFieldsCount === 0;
+
+    const getButtonText = () => {
+        if (updateMutation.isPending) return '처리 중...';
+        if (isAllEmpty) return '다음에 입력하기';
+        if (filledFieldsCount === totalFields) return '시작하기';
+        return `${filledFieldsCount}/${totalFields} 나머지는 다음에 입력하기`;
+    };
+
+    const getButtonColorClass = () => {
+        if (isAllEmpty) return 'bg-secondary text-secondary-foreground hover:bg-secondary/80';
+        switch (filledFieldsCount) {
+            case 1: return 'bg-primary/20 hover:bg-primary/30 text-primary-foreground';
+            case 2: return 'bg-primary/40 hover:bg-primary/50 text-primary-foreground';
+            case 3: return 'bg-primary/60 hover:bg-primary/70 text-primary-foreground';
+            case 4: return 'bg-primary/80 hover:bg-primary/90 text-primary-foreground';
+            case 5: return 'bg-primary hover:bg-primary/90 text-primary-foreground';
+            default: return ''; // Should not happen if > 0
+        }
+    };
+
+    // Conditional Returns START HERE (after all hooks)
+    if (isAuthLoading || isMemberLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <div className="text-center">
+                    <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+                    <p className="text-muted-foreground">정보를 불러오는 중입니다...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return null; // Will trigger redirect in middleware/AuthInitializer
+    }
+
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-background p-4 my-8">
+            <Card className="w-full max-w-md">
+                <CardHeader>
+                    <CardTitle className="text-2xl text-center">회원가입 마무리</CardTitle>
+                    <CardDescription className="text-center mb-4">
+                        서비스 이용을 위해 추가 정보를 입력해주세요.<br />
+                        모든 정보는 선택사항입니다.
+                    </CardDescription>
+                    <div className="space-y-2">
+                        <Progress value={progress} className="h-2" />
+                        <p className="text-xs text-right text-muted-foreground">
+                            {Math.round(progress)}% 완료
+                        </p>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="nickname"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>닉네임</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder={`${placeholderNickname} (선택)`} {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            입력하지 않으면 <strong>{placeholderNickname}</strong>(으)로 자동 생성됩니다.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="phoneNum"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>휴대전화번호</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="010-1234-5678 (선택)" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="birthday"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>생년월일</FormLabel>
+                                        <FormControl>
+                                            <Input type="date" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="address"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>주소</FormLabel>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex gap-2">
+                                                <FormControl>
+                                                    <Input placeholder="주소를 검색하세요 (선택)" {...field} readOnly />
+                                                </FormControl>
+                                                <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
+                                                    <DialogTrigger asChild>
+                                                        <Button type="button" variant="outline" size="icon">
+                                                            <Search className="h-4 w-4" />
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="sm:max-w-md">
+                                                        <DialogHeader>
+                                                            <DialogTitle>주소 검색</DialogTitle>
+                                                        </DialogHeader>
+                                                        <div className="mt-4 border rounded-md overflow-hidden">
+                                                            <DaumPostcode
+                                                                onComplete={handleAddressComplete}
+                                                                style={{ height: '400px', width: '100%' }}
+                                                            />
+                                                        </div>
+                                                    </DialogContent>
+                                                </Dialog>
+                                            </div>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="detailAddress"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <Input placeholder="상세 주소를 입력하세요 (선택)" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Button
+                                type="submit"
+                                className={`w-full transition-colors duration-300 ${getButtonColorClass()}`}
+                                disabled={updateMutation.isPending}
+                            >
+                                {getButtonText()}
+                            </Button>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
