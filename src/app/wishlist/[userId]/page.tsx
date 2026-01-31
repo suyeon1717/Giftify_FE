@@ -3,6 +3,7 @@
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { Footer } from '@/components/layout/Footer';
 import { WishItemCard } from '@/components/common/WishItemCard';
 import { WishlistHeader } from '@/features/wishlist/components/WishlistHeader';
 import { AccessDeniedView } from '@/features/wishlist/components/AccessDeniedView';
@@ -196,6 +197,8 @@ export default function FriendWishlistPage({ params }: FriendWishlistPageProps) 
                         ))}
                     </div>
                 )}
+
+                <Footer />
             </div>
         </AppShell>
     );

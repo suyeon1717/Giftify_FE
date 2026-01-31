@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
+import { Footer } from '@/components/layout/Footer';
 import { ProductList } from '@/features/product/components/ProductList';
 import { useInfiniteProducts, useInfiniteSearchProducts } from '@/features/product/hooks/useProducts';
 import { Loader2, X } from 'lucide-react';
@@ -273,6 +274,9 @@ function ProductSearchContent() {
                 <p className="text-xs text-muted-foreground">모든 상품을 불러왔습니다</p>
               ) : null}
             </div>
+
+            {/* Footer */}
+            <Footer />
           </div>
         </main>
       </div>

@@ -10,8 +10,8 @@ import {
     ShoppingBag,
     User,
     Heart,
-    Home,
-    Wallet,
+    LogOut,
+    Menu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -29,12 +29,10 @@ interface HeaderProps {
     hasBack?: boolean;
     onBack?: () => void;
     className?: string;
-    // Search specific
     searchQuery?: string;
     onSearchChange?: (value: string) => void;
     onSearchSubmit?: () => void;
     onSearchClear?: () => void;
-    // Slots for customization
     rightAction?: React.ReactNode;
 }
 
@@ -61,162 +59,157 @@ export function Header({
         }
     };
 
-    const renderContent = () => {
-        switch (variant) {
-            case 'detail':
-                return (
-                    <div className="flex w-full items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            {hasBack && (
-                                <button
-                                    onClick={handleBack}
-                                    aria-label="Go back"
-                                    className="p-1 hover:opacity-60 transition-opacity"
-                                >
-                                    <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
-                                </button>
-                            )}
-                            {title && (
-                                <h1 className="text-sm font-medium tracking-tight">{title}</h1>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => setIsSearchOpen(true)}
-                                className="hover:opacity-60 transition-opacity"
-                                aria-label="Search"
-                            >
-                                <Search className="h-5 w-5" strokeWidth={1.5} />
+    // simplified mobile header or detail/search header
+    const renderSimpleContent = () => {
+        if (variant === 'search') {
+            return (
+                <div className="flex w-full items-center gap-3 h-14 px-4">
+                    <button onClick={handleBack} className="p-1 hover:opacity-60">
+                        <ChevronLeft className="h-6 w-6" strokeWidth={1.5} />
+                    </button>
+                    <div className="relative flex-1">
+                        <input
+                            type="text"
+                            placeholder="검색어를 입력하세요"
+                            className="w-full h-9 px-0 bg-transparent border-0 border-b border-black focus:outline-none text-base"
+                            value={searchQuery}
+                            onChange={(e) => onSearchChange?.(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && onSearchSubmit?.()}
+                            autoFocus
+                        />
+                        {searchQuery && (
+                            <button onClick={onSearchClear} className="absolute right-0 top-1/2 -translate-y-1/2 p-1">
+                                <X className="h-4 w-4" />
                             </button>
-                            {rightAction || <NavigationIcons onSearchClick={() => setIsSearchOpen(true)} />}
-                        </div>
+                        )}
                     </div>
-                );
-
-            case 'search':
-                return (
-                    <div className="flex w-full items-center gap-3">
-                        <button
-                            onClick={handleBack}
-                            aria-label="Go back"
-                            className="p-1 hover:opacity-60 transition-opacity"
-                        >
-                            <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
-                        </button>
-                        <div className="relative flex-1">
-                            <input
-                                type="text"
-                                placeholder="검색어를 입력하세요"
-                                className="w-full h-9 px-0 bg-transparent border-0 border-b border-border focus:border-foreground focus:outline-none text-sm"
-                                value={searchQuery}
-                                onChange={(e) => onSearchChange?.(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && onSearchSubmit?.()}
-                                autoFocus
-                            />
-                            {searchQuery && (
-                                <button
-                                    type="button"
-                                    onClick={onSearchClear}
-                                    className="absolute right-0 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    <X className="h-4 w-4" strokeWidth={1.5} />
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                );
-
-            case 'main':
-            default:
-                return <MainHeaderContent onSearchClick={() => setIsSearchOpen(true)} />;
+                </div>
+            );
         }
+
+        if (variant === 'detail') {
+            return (
+                <div className="flex w-full items-center justify-between h-14 px-4 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+                    <div className="flex items-center gap-3">
+                        {hasBack && (
+                            <button onClick={handleBack} className="p-1 hover:opacity-60">
+                                <ChevronLeft className="h-6 w-6" strokeWidth={1.5} />
+                            </button>
+                        )}
+                        {title && <h1 className="text-base font-medium">{title}</h1>}
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setIsSearchOpen(true)}>
+                            <Search className="h-6 w-6" strokeWidth={1.5} />
+                        </button>
+                        {rightAction || <MobileNavigationIcons />}
+                    </div>
+                </div>
+            );
+        }
+
+        // Default Main Header (Mobile View)
+        return (
+            <div className="flex md:hidden w-full items-center justify-between h-14 px-4 bg-white sticky top-0 z-50 border-b">
+                <Link href="/" className="text-xl font-bold tracking-tighter">
+                    Giftify
+                </Link>
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setIsSearchOpen(true)}>
+                        <Search className="h-6 w-6" strokeWidth={1.5} />
+                    </button>
+                    <MobileNavigationIcons />
+                </div>
+            </div>
+        );
     };
 
     return (
         <>
-            <header
-                className={cn(
-                    'sticky top-0 z-50 flex h-14 w-full items-center bg-background px-4 md:px-8 border-b border-border/50',
-                    className
-                )}
-            >
-                {renderContent()}
-            </header>
+            {/* Desktop 3-Row Header */}
+            {variant === 'main' && (
+                <header className={cn('hidden md:block w-full bg-white z-50 sticky top-0', className)}>
+                    <div className="border-b border-gray-100">
+                        {/* Row 1: Top Bar */}
+                        <div className="max-w-screen-2xl mx-auto px-8 h-10 flex items-center justify-between">
+                            <Link href="/" className="text-sm font-bold tracking-widest">
+                                Giftify
+                            </Link>
+                            <DesktopTopNav />
+                        </div>
+                    </div>
 
-            {/* Search Overlay */}
-            <SearchOverlay
-                isOpen={isSearchOpen}
-                onClose={() => setIsSearchOpen(false)}
-            />
+                    <div className="bg-white/95 backdrop-blur-sm">
+                        {/* Row 2: Main Nav */}
+                        <div className="max-w-screen-2xl mx-auto px-8 pt-6 pb-4 flex items-center justify-between">
+                            <DesktopMainNav />
+                            <button
+                                onClick={() => setIsSearchOpen(true)}
+                                className="hover:opacity-60 transition-opacity"
+                            >
+                                <Search className="w-8 h-8" strokeWidth={1.5} />
+                            </button>
+                        </div>
+
+                        {/* Row 3: Category Nav */}
+                        <div className="max-w-screen-2xl mx-auto px-8 pb-4">
+                            <DesktopCategoryNav />
+                        </div>
+                    </div>
+                </header>
+            )}
+
+            {/* Mobile / Variant Header */}
+            <div className="md:hidden">
+                {renderSimpleContent()}
+            </div>
+            {variant !== 'main' && (
+                <div className="hidden md:block">
+                    {renderSimpleContent()}
+                </div>
+            )}
+
+
+            <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
         </>
     );
 }
 
-/**
- * Navigation Icons - Combined from BottomNav
- * 29cm minimal icon style
- */
-function NavigationIcons({ onSearchClick }: { onSearchClick?: () => void }) {
-    const { user, isLoading } = useAuth();
-    const pathname = usePathname();
+// --- Sub Components ---
+
+function DesktopTopNav() {
+    const { user, logout } = useAuth();
     const { data: cart } = useCart();
-
-    const cartItemCount = user ? (cart?.items.length || 0) : 0;
-
-    if (isLoading) {
-        return <div className="h-5 w-5 animate-pulse rounded-full bg-muted" />;
-    }
+    const cartCount = cart?.items.length || 0;
 
     return (
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6 text-[10px] font-medium tracking-tight text-gray-900">
             {user ? (
                 <>
-                    {/* Wishlist */}
-                    <Link
-                        href="/wishlist"
-                        className={cn(
-                            "hover:opacity-60 transition-opacity hidden sm:block",
-                            pathname.startsWith('/wishlist') && "opacity-100"
-                        )}
-                        aria-label="Wishlist"
-                    >
-                        <Heart className="h-5 w-5" strokeWidth={1.5} />
+                    <Link href="/u/me" className="flex items-center gap-1 hover:opacity-60 transition-opacity">
+                        <User className="w-3 h-3" />
+                        MY PAGE
                     </Link>
-
-                    {/* Cart with badge */}
-                    <Link
-                        href="/cart"
-                        className={cn(
-                            "hover:opacity-60 transition-opacity relative",
-                            pathname.startsWith('/cart') && "opacity-100"
-                        )}
-                        aria-label="Cart"
-                    >
-                        <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
-                        {cartItemCount > 0 && (
-                            <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-foreground px-1 text-[10px] text-background font-medium">
-                                {cartItemCount > 99 ? '99+' : cartItemCount}
+                    <Link href="/wishlist" className="flex items-center gap-1 hover:opacity-60 transition-opacity">
+                        <Heart className="w-3 h-3" />
+                        MY LIKE
+                    </Link>
+                    <Link href="/cart" className="flex items-center gap-1 hover:opacity-60 transition-opacity relative">
+                        <ShoppingBag className="w-3 h-3" />
+                        CART
+                        {cartCount > 0 && (
+                            <span className="bg-[#ff4800] text-white text-[9px] rounded-full min-w-[14px] h-[14px] flex items-center justify-center -ml-0.5 -mt-2">
+                                {cartCount}
                             </span>
                         )}
                     </Link>
-
-                    {/* Wallet */}
-                    <Link
-                        href="/wallet"
-                        className={cn(
-                            "hover:opacity-60 transition-opacity hidden sm:block",
-                            pathname.startsWith('/wallet') && "opacity-100"
-                        )}
-                        aria-label="Wallet"
-                    >
-                        <Wallet className="h-5 w-5" strokeWidth={1.5} />
-                    </Link>
-
-                    {/* User Menu */}
-                    <UserMenu />
+                    <button onClick={logout} className="flex items-center gap-1 hover:opacity-60 transition-opacity">
+                        <LogOut className="w-3 h-3" />
+                        LOGOUT
+                    </button>
                 </>
             ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex gap-4">
                     <LoginButton />
                     <SignupButton />
                 </div>
@@ -225,47 +218,111 @@ function NavigationIcons({ onSearchClick }: { onSearchClick?: () => void }) {
     );
 }
 
-/**
- * Main Header Content - 29cm Editorial Style
- */
-function MainHeaderContent({ onSearchClick }: { onSearchClick: () => void }) {
+function DesktopMainNav() {
     return (
-        <div className="flex w-full items-center justify-between">
-            {/* Logo */}
-            <Link
-                href="/"
-                className="text-lg font-semibold tracking-tight hover:opacity-60 transition-opacity"
-            >
-                Giftify
+        <nav className="flex items-center gap-10">
+            <Link href="/fundings" className="text-4xl font-extrabold tracking-tight hover:text-gray-600 transition-colors">
+                FUNDING
             </Link>
+            <Link href="/showcase/1" className="text-4xl font-extrabold tracking-tight hover:text-gray-600 transition-colors">
+                SHOWCASE
+            </Link>
+            <Link href="/curation/birthday-men" className="text-4xl font-extrabold tracking-tight hover:text-gray-600 transition-colors">
+                CURATION
+            </Link>
+            <Link href="/reviews" className="text-4xl font-extrabold tracking-tight hover:text-gray-600 transition-colors">
+                STORY
+            </Link>
+        </nav>
+    );
+}
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
-                <Link
-                    href="/products"
-                    className="text-sm font-medium hover:opacity-60 transition-opacity"
-                >
-                    PRODUCTS
-                </Link>
-                <Link
-                    href="/fundings"
-                    className="text-sm font-medium hover:opacity-60 transition-opacity"
-                >
-                    FUNDINGS
-                </Link>
-            </nav>
+const GIFT_CATEGORIES_DATA = [
+    { label: 'BIRTHDAY', subCategories: ['For Him', 'For Her', 'Friends', 'Parents', 'Kids'] },
+    { label: 'ANNIVERSARY', subCategories: ['Couple Items', 'Flowers', 'Dining', 'Small Gifts'] },
+    { label: 'WEDDING', subCategories: ['Tableware', 'Home Decor', 'Appliances', 'Bedding'] },
+    { label: 'BABY', subCategories: ['Clothing', 'Toys', 'Tude', 'Maternity'] },
+    { label: 'HOUSEWARMING', subCategories: ['Diffusers', 'Towels', 'Plants', 'Kitchenware'] },
+    { label: 'LUXURY', subCategories: ['Bags', 'Wallets', 'Jewelry', 'Watches'] },
+    { label: 'TECH', subCategories: ['Audio', 'Mobile', 'Gaming', 'Cameras'] },
+    { label: 'LIVING', subCategories: ['Furniture', 'Lighting', 'Fabric', 'Organization'] },
+    { label: 'BEAUTY', subCategories: ['Skincare', 'Makeup', 'Perfume', 'Body & Hair'] },
+    { label: 'GOURMET', subCategories: ['Coffee & Tea', 'Bakery', 'Fresh Food', 'Wine'] },
+];
 
-            {/* Actions */}
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={onSearchClick}
-                    className="hover:opacity-60 transition-opacity"
-                    aria-label="Search"
-                >
-                    <Search className="h-5 w-5" strokeWidth={1.5} />
-                </button>
-                <NavigationIcons onSearchClick={onSearchClick} />
+function DesktopCategoryNav() {
+    const [hoveredCategory, setHoveredCategory] = React.useState<string | null>(null);
+
+    return (
+        <div
+            className="flex flex-col relative"
+            onMouseLeave={() => setHoveredCategory(null)}
+        >
+            {/* Category List */}
+            <div className="flex items-center gap-6 border-t border-black pt-4 pb-1 relative z-20 bg-white">
+                {GIFT_CATEGORIES_DATA.map(cat => (
+                    <Link
+                        key={cat.label}
+                        href={`/products?category=${cat.label.toLowerCase()}`}
+                        className={cn(
+                            "text-sm font-bold transition-all duration-200 pb-1 border-b-[3px] border-transparent",
+                            hoveredCategory === cat.label
+                                ? "border-black text-black"
+                                : "hover:text-gray-500"
+                        )}
+                        onMouseEnter={() => setHoveredCategory(cat.label)}
+                    >
+                        {cat.label}
+                    </Link>
+                ))}
+                <div className="w-px h-3 bg-gray-300 mx-2" />
+                <Link href="/events" className="text-sm font-serif italic hover:text-gray-500 transition-colors">Event</Link>
+                <Link href="/lookbook" className="text-sm font-serif italic hover:text-gray-500 transition-colors">Trend</Link>
             </div>
+
+            {/* Mega Menu Dropdown */}
+            <div
+                className={cn(
+                    "absolute top-full left-0 w-full bg-white transition-all duration-300 ease-out overflow-hidden z-10",
+                    hoveredCategory ? "max-h-64 opacity-100 border-b border-gray-100 shadow-sm" : "max-h-0 opacity-0"
+                )}
+            >
+                {hoveredCategory && (
+                    <div className="py-6 flex flex-col flex-wrap h-48 content-start gap-x-12 gap-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {/* Find the active category data */}
+                        {GIFT_CATEGORIES_DATA.find(c => c.label === hoveredCategory)?.subCategories.map(sub => (
+                            <Link
+                                key={sub}
+                                href={`/products?category=${hoveredCategory.toLowerCase()}&sub=${sub.toLowerCase()}`}
+                                className="text-sm text-gray-500 hover:text-black hover:underline underline-offset-4"
+                            >
+                                {sub}
+                            </Link>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function MobileNavigationIcons() {
+    const { data: cart } = useCart();
+    const cartCount = cart?.items.length || 0;
+
+    return (
+        <div className="flex items-center gap-3">
+            <Link href="/cart" className="relative">
+                <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
+                {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#ff4800] text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                        {cartCount}
+                    </span>
+                )}
+            </Link>
+            <Link href="/u/me">
+                <User className="w-6 h-6" strokeWidth={1.5} />
+            </Link>
         </div>
     );
 }

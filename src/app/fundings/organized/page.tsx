@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
+import { Footer } from '@/components/layout/Footer';
 import { FundingCard } from '@/components/common/FundingCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,6 +45,8 @@ export default function OrganizedFundingsPage() {
                         <FundingList data={data} isLoading={isLoading} isError={isError} />
                     </TabsContent>
                 </Tabs>
+
+                <Footer />
             </div>
         </AppShell>
     );

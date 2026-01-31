@@ -45,8 +45,8 @@ export function WelcomeSection() {
     }
 
     return (
-        <section className="px-4 py-8 md:px-8">
-            <div className="border-b border-border pb-8">
+        <section className="border-b border-border">
+            <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-8 md:py-12">
                 <p className="text-sm text-muted-foreground">Welcome back</p>
                 <h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">
                     {member?.nickname || user.name || user.nickname || '친구'}님,

@@ -15,9 +15,11 @@ const mockCart: Cart = {
             funding: {
                 id: 'f1',
                 wishItemId: 'wi-1',
-                recipient: { id: 'user-2', nickname: 'John', avatarUrl: '' },
+                organizerId: 'user-3',
                 organizer: { id: 'user-3', nickname: 'Jane', avatarUrl: '' },
-                product: { id: 'p1', name: 'Sony WH-1000XM5', price: 450000, imageUrl: '' },
+                recipientId: 'user-2',
+                recipient: { id: 'user-2', nickname: 'John', avatarUrl: '' },
+                product: { id: 'p1', name: 'Sony WH-1000XM5', price: 450000, imageUrl: '', status: 'ON_SALE' as const },
                 targetAmount: 450000,
                 currentAmount: 0,
                 status: 'IN_PROGRESS',
@@ -37,9 +39,11 @@ const mockCart: Cart = {
             funding: {
                 id: 'f2',
                 wishItemId: 'wi-2',
-                recipient: { id: 'user-4', nickname: 'Bob', avatarUrl: '' },
+                organizerId: 'user-5',
                 organizer: { id: 'user-5', nickname: 'Alice', avatarUrl: '' },
-                product: { id: 'p2', name: 'Coffee Beans', price: 4500, imageUrl: '' },
+                recipientId: 'user-4',
+                recipient: { id: 'user-4', nickname: 'Bob', avatarUrl: '' },
+                product: { id: 'p2', name: 'Coffee Beans', price: 4500, imageUrl: '', status: 'ON_SALE' as const },
                 targetAmount: 9000,
                 currentAmount: 0,
                 status: 'IN_PROGRESS',
@@ -53,8 +57,8 @@ const mockCart: Cart = {
             createdAt: '2026-01-01T00:00:00Z',
         },
     ],
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-01-01T00:00:00Z',
+    selectedCount: 2,
+    totalAmount: 459000,
 };
 
 // Mock useCart hook
@@ -112,17 +116,21 @@ describe('CartPage Feature', () => {
     it('GIVEN cart has items, THEN it should display items and summary', () => {
         render(<CartPage />);
 
-        // Should display funding product names
-        expect(screen.getByText('Sony WH-1000XM5')).toBeInTheDocument();
-        expect(screen.getByText('Coffee Beans')).toBeInTheDocument();
+        // Should display funding product names (may appear in both desktop and mobile views)
+        const sonyElements = screen.getAllByText('Sony WH-1000XM5');
+        const coffeeElements = screen.getAllByText('Coffee Beans');
+        expect(sonyElements.length).toBeGreaterThan(0);
+        expect(coffeeElements.length).toBeGreaterThan(0);
     });
 
     it('GIVEN cart items, THEN it should show recipient info', () => {
         render(<CartPage />);
 
-        // Should display recipient names
-        expect(screen.getByText(/John/)).toBeInTheDocument();
-        expect(screen.getByText(/Bob/)).toBeInTheDocument();
+        // Should display recipient names (may appear in both desktop and mobile views)
+        const johnElements = screen.getAllByText(/John/);
+        const bobElements = screen.getAllByText(/Bob/);
+        expect(johnElements.length).toBeGreaterThan(0);
+        expect(bobElements.length).toBeGreaterThan(0);
     });
 
     it('GIVEN cart items, THEN it should display participation amounts', () => {

@@ -35,59 +35,61 @@ export function FriendsWishlistSection({ friendsWishlists }: FriendsWishlistSect
 
     return (
         <section className="py-8">
-            {/* Section Header */}
-            <div className="flex items-end justify-between px-4 md:px-8 mb-6">
-                <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Friends</p>
-                    <h2 className="text-xl font-semibold tracking-tight mt-1">친구들의 위시리스트</h2>
+            <div className="max-w-screen-2xl mx-auto w-full">
+                {/* Section Header */}
+                <div className="flex items-end justify-between px-4 md:px-8 mb-6">
+                    <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Friends</p>
+                        <h2 className="text-xl font-semibold tracking-tight mt-1">친구들의 위시리스트</h2>
+                    </div>
+                    <Link
+                        href="/friends"
+                        className="flex items-center gap-1 text-sm hover:opacity-60 transition-opacity"
+                    >
+                        더보기
+                        <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+                    </Link>
                 </div>
-                <Link
-                    href="/friends"
-                    className="flex items-center gap-1 text-sm hover:opacity-60 transition-opacity"
-                >
-                    더보기
-                    <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-                </Link>
-            </div>
 
-            {/* Wishlist Items */}
-            <div className="px-4 md:px-8 space-y-0 divide-y divide-border">
-                {friendsWishlists.map((item) => {
-                    const topItems = item.previewItems.slice(0, 3);
-                    const itemCountText =
-                        topItems.length > 0
-                            ? `${topItems[0].product.name}${item.wishlist.itemCount > 1 ? ` 외 ${item.wishlist.itemCount - 1}개` : ''}`
-                            : '아직 아이템이 없어요';
+                {/* Wishlist Items */}
+                <div className="px-4 md:px-8 space-y-0 divide-y divide-border">
+                    {friendsWishlists.map((item) => {
+                        const topItems = item.previewItems.slice(0, 3);
+                        const itemCountText =
+                            topItems.length > 0
+                                ? `${topItems[0].product.name}${item.wishlist.itemCount > 1 ? ` 외 ${item.wishlist.itemCount - 1}개` : ''}`
+                                : '아직 아이템이 없어요';
 
-                    return (
-                        <Link
-                            key={item.member.id}
-                            href={`/wishlist/${item.member.id}`}
-                            className="flex items-center justify-between py-4 hover:opacity-70 transition-opacity group"
-                        >
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <Avatar className="h-10 w-10">
-                                    <AvatarImage src={item.member.avatarUrl || undefined} />
-                                    <AvatarFallback className="text-sm">
-                                        {(item.member.nickname || '알')[0]}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">
-                                        {item.member.nickname}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground truncate">
-                                        {itemCountText}
-                                    </p>
+                        return (
+                            <Link
+                                key={item.member.id}
+                                href={`/wishlist/${item.member.id}`}
+                                className="flex items-center justify-between py-4 hover:opacity-70 transition-opacity group"
+                            >
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <Avatar className="h-10 w-10">
+                                        <AvatarImage src={item.member.avatarUrl || undefined} />
+                                        <AvatarFallback className="text-sm">
+                                            {(item.member.nickname || '알')[0]}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">
+                                            {item.member.nickname}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground truncate">
+                                            {itemCountText}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                            <ArrowRight
-                                className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform"
-                                strokeWidth={1.5}
-                            />
-                        </Link>
-                    );
-                })}
+                                <ArrowRight
+                                    className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform"
+                                    strokeWidth={1.5}
+                                />
+                            </Link>
+                        );
+                    })}
+                </div>
             </div>
         </section>
     );

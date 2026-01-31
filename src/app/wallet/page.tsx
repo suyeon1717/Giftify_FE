@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
+import { Footer } from '@/components/layout/Footer';
 import { WalletBalance } from '@/features/wallet/components/WalletBalance';
 import { TransactionHistory } from '@/features/wallet/components/TransactionHistory';
 import { ChargeModal } from '@/features/wallet/components/ChargeModal';
@@ -70,6 +71,8 @@ export default function WalletPage() {
                     />
                 </section>
             </div>
+
+            <Footer />
 
             <ChargeModal
                 open={isChargeModalOpen}

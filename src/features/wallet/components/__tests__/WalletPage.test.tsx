@@ -41,27 +41,25 @@ const mockWallet: Wallet = {
     id: 'w1',
     memberId: 'user-1',
     balance: 15000,
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-01-01T00:00:00Z',
 };
 
 const mockTransactions: WalletTransaction[] = [
     {
         id: 't1',
-        walletId: 'w1',
         type: 'PAYMENT',
         amount: 4500,
         balanceAfter: 15000,
         description: '스타벅스 아메리카노 구매',
+        relatedId: null,
         createdAt: '2026-01-15T10:00:00Z',
     },
     {
         id: 't2',
-        walletId: 'w1',
         type: 'CHARGE',
         amount: 20000,
         balanceAfter: 19500,
         description: '포인트 충전',
+        relatedId: null,
         createdAt: '2026-01-10T10:00:00Z',
     },
 ];
@@ -90,8 +88,9 @@ describe('WalletPage Feature', () => {
     it('GIVEN wallet page, THEN it should display balance', () => {
         render(<WalletPage />);
 
-        // Initial Balance (formatted with space before P)
-        expect(screen.getByText('15,000 P')).toBeInTheDocument();
+        // Balance is rendered as separate text nodes: "15,000" and "P"
+        expect(screen.getByText('15,000')).toBeInTheDocument();
+        expect(screen.getByText('P')).toBeInTheDocument();
     });
 
     it('GIVEN wallet page, THEN it should display transaction history', () => {

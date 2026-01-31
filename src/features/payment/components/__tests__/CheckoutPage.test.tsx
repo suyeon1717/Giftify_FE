@@ -15,9 +15,11 @@ const mockCart: Cart = {
             funding: {
                 id: 'f1',
                 wishItemId: 'wi-1',
-                recipient: { id: 'user-2', nickname: 'John', avatarUrl: '' },
+                organizerId: 'user-3',
                 organizer: { id: 'user-3', nickname: 'Jane', avatarUrl: '' },
-                product: { id: 'p1', name: 'Sony WH-1000XM5', price: 450000, imageUrl: '' },
+                recipientId: 'user-2',
+                recipient: { id: 'user-2', nickname: 'John', avatarUrl: '' },
+                product: { id: 'p1', name: 'Sony WH-1000XM5', price: 450000, imageUrl: '', status: 'ON_SALE' as const },
                 targetAmount: 450000,
                 currentAmount: 0,
                 status: 'IN_PROGRESS',
@@ -31,16 +33,14 @@ const mockCart: Cart = {
             createdAt: '2026-01-01T00:00:00Z',
         },
     ],
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-01-01T00:00:00Z',
+    selectedCount: 1,
+    totalAmount: 450000,
 };
 
 const mockWallet: Wallet = {
     id: 'w1',
     memberId: 'user-1',
     balance: 500000,
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-01-01T00:00:00Z',
 };
 
 // Mock UI components

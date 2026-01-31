@@ -59,7 +59,7 @@ export function FundingCard({
         return (
             <div
                 className={cn(
-                    'w-[260px] shrink-0 cursor-pointer group',
+                    'w-[220px] md:w-[240px] shrink-0 cursor-pointer group',
                     className
                 )}
                 onClick={onClick}

@@ -34,9 +34,11 @@ describe('ParticipateModal Component', () => {
     const mockFunding: Funding = {
         id: 'f1',
         wishItemId: 'wi-1',
-        recipient: { id: 'user-1', nickname: 'John', avatarUrl: '' },
+        organizerId: 'user-2',
         organizer: { id: 'user-2', nickname: 'Jane', avatarUrl: '' },
-        product: { id: 'p1', name: 'Test Funding Item', price: 100000, imageUrl: '' },
+        recipientId: 'user-1',
+        recipient: { id: 'user-1', nickname: 'John', avatarUrl: '' },
+        product: { id: 'p1', name: 'Test Funding Item', price: 100000, imageUrl: '', status: 'ON_SALE' as const },
         targetAmount: 100000,
         currentAmount: 50000,
         status: 'IN_PROGRESS',
