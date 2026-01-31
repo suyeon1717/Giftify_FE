@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useProfile } from '@/features/profile/hooks/useProfile';
 import { LogoutButton } from './LogoutButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -21,7 +22,10 @@ import Link from 'next/link';
  * Shows avatar, name, and dropdown with profile/wallet/wishlist links.
  */
 export function UserMenu() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { data: member, isLoading: isProfileLoading } = useProfile();
+
+  const isLoading = isAuthLoading || isProfileLoading;
 
   if (isLoading) {
     return (
@@ -33,21 +37,20 @@ export function UserMenu() {
     return null;
   }
 
-  const initials = user.name
-    ? user.name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    : user.email?.[0]?.toUpperCase() || 'U';
+  const displayName = member?.nickname || user.name || user.nickname || 'User';
+  const initials = displayName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'U';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.picture || undefined} alt={user.name || 'User'} />
+            <AvatarImage src={member?.avatarUrl || user.picture || undefined} alt={displayName} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </button>
@@ -55,7 +58,7 @@ export function UserMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name || 'User'}</p>
+            <p className="text-sm font-medium leading-none">{displayName}</p>
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
           </div>
         </DropdownMenuLabel>
