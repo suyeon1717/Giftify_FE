@@ -125,7 +125,16 @@ export default function CompleteSignupPage() {
             toast.success('프로필 설정이 완료되었습니다!');
             router.push('/');
         },
-        onError: (error) => {
+        onError: (error: any) => {
+            // 409 Conflict means member already exists (created by UserAuthenticatedEvent)
+            // Treat this as success and redirect to home
+            if (error?.status === 409 || error?.message?.includes('409')) {
+                console.log('Member already exists, redirecting to home');
+                queryClient.invalidateQueries({ queryKey: ['me'] });
+                toast.success('프로필 설정이 완료되었습니다!');
+                router.push('/');
+                return;
+            }
             console.error('Failed to update profile:', error);
             toast.error('프로필 업데이트에 실패했습니다. 다시 시도해주세요.');
         },

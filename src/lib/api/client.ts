@@ -4,11 +4,13 @@ const BASE_URL = '/api/proxy';
 
 export class ApiError extends Error {
     code: string;
+    status: number;
     details?: unknown;
 
-    constructor(message: string, code: string, details?: unknown) {
+    constructor(message: string, code: string, status: number, details?: unknown) {
         super(message);
         this.code = code;
+        this.status = status;
         this.details = details;
         this.name = 'ApiError';
     }
@@ -47,7 +49,7 @@ async function request<T>(endpoint: string, config: RequestConfig = {}): Promise
         // Optional: Global error toast for specific critical errors
         // toast.error(errorMessage);
 
-        throw new ApiError(errorMessage, errorCode, data.details);
+        throw new ApiError(errorMessage, errorCode, response.status, data.details);
     }
 
     return data as T;
