@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 
 export function MSWProvider({ children }: { children: React.ReactNode }) {
-  const shouldEnableMSW = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_API_MOCKING === 'enabled';
+  const shouldEnableMSW = process.env.NEXT_PUBLIC_API_MOCKING !== 'disabled' && 
+    (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_API_MOCKING === 'enabled');
 
   const [mswReady, setMswReady] = useState(
     () => !shouldEnableMSW
