@@ -18,26 +18,27 @@ export function WelcomeSection() {
             </section>
         );
     }
-
     if (!user) {
         return (
-            <section className="px-4 py-8 md:px-8">
-                <div className="border-b border-border pb-8">
-                    <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                        Better choice
-                        <br />
-                        Better gift
-                    </h1>
-                    <p className="mt-3 text-sm text-muted-foreground">
-                        친구들과 함께하는 특별한 선물 경험
-                    </p>
-                    <div className="mt-6 flex gap-3">
-                        <Button asChild size="lg">
-                            <a href="/auth/login">로그인</a>
-                        </Button>
-                        <Button asChild variant="outline" size="lg">
-                            <Link href="/products">둘러보기</Link>
-                        </Button>
+            <section className="border-b border-border">
+                <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-8">
+                    <div className="pb-8">
+                        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+                            Better choice
+                            <br />
+                            Better gift
+                        </h1>
+                        <p className="mt-3 text-sm text-muted-foreground">
+                            친구들과 함께하는 특별한 선물 경험
+                        </p>
+                        <div className="mt-6 flex gap-3">
+                            <Button asChild size="lg">
+                                <a href="/auth/login">로그인</a>
+                            </Button>
+                            <Button asChild variant="outline" size="lg">
+                                <Link href="/products">둘러보기</Link>
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </section>

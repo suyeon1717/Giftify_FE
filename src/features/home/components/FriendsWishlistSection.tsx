@@ -14,20 +14,22 @@ export function FriendsWishlistSection({ friendsWishlists }: FriendsWishlistSect
     if (friendsWishlists.length === 0) {
         return (
             <section className="py-8">
-                <div className="px-4 md:px-8 mb-6">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">Friends</p>
-                    <h2 className="text-xl font-semibold tracking-tight mt-1">친구들의 위시리스트</h2>
-                </div>
+                <div className="max-w-screen-2xl mx-auto w-full">
+                    <div className="px-4 md:px-8 mb-6">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Friends</p>
+                        <h2 className="text-xl font-semibold tracking-tight mt-1">친구들의 위시리스트</h2>
+                    </div>
 
-                <div className="mx-4 md:mx-8 border border-dashed border-border py-16 flex flex-col items-center">
-                    <Users className="h-8 w-8 text-muted-foreground mb-4" strokeWidth={1} />
-                    <p className="text-sm font-medium">친구들의 위시리스트가 없어요</p>
-                    <p className="text-xs text-muted-foreground mt-1 mb-6">
-                        친구를 초대하고 함께 선물을 준비해보세요
-                    </p>
-                    <Button variant="outline" asChild>
-                        <Link href="/friends/invite">친구 초대하기</Link>
-                    </Button>
+                    <div className="mx-4 md:mx-8 border border-dashed border-border py-16 flex flex-col items-center">
+                        <Users className="h-8 w-8 text-muted-foreground mb-4" strokeWidth={1} />
+                        <p className="text-sm font-medium">친구들의 위시리스트가 없어요</p>
+                        <p className="text-xs text-muted-foreground mt-1 mb-6">
+                            친구를 초대하고 함께 선물을 준비해보세요
+                        </p>
+                        <Button variant="outline" asChild>
+                            <Link href="/friends/invite">친구 초대하기</Link>
+                        </Button>
+                    </div>
                 </div>
             </section>
         );
