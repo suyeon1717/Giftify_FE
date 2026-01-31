@@ -33,22 +33,8 @@ export function AuthInitializer() {
                 hasSynced.current = true;
                 console.log('[AuthInitializer] Checking member status...');
 
-                // First, check if member exists with lightweight /me endpoint
-                try {
-                    const member = await getMe();
-                    if (member) {
-                        // Member exists, no need to call login
-                        console.log('[AuthInitializer] Member exists, skipping login');
-                        sessionStorage.setItem(SYNC_SESSION_KEY, 'true');
-                        return;
-                    }
-                } catch {
-                    // Member doesn't exist (404) or other error, proceed to sync
-                    console.log('[AuthInitializer] Member not found, will sync...');
-                }
-
-                // Member doesn't exist, call sync (which calls login)
-                console.log('[AuthInitializer] New user, syncing session...');
+                // Call sync to ensure session is synchronized and get isNewUser status
+                console.log('[AuthInitializer] Syncing session with backend...');
                 const result = await sync();
                 console.log('[AuthInitializer] Sync result:', result);
                 sessionStorage.setItem(SYNC_SESSION_KEY, 'true');

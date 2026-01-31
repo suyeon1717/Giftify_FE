@@ -57,8 +57,11 @@ export const handlers = [
     // Dynamically check if new user (for testing: email containing 'new')
     const isNewUser = !currentUser.nickname || currentUser.email.includes('new');
     return HttpResponse.json({
-      member: currentUser.nickname ? currentUser : null,
+      member: isNewUser ? null : currentUser,
       isNewUser,
+      authSub: currentUser.authSub,
+      email: currentUser.email,
+      name: currentUser.nickname || 'User',
     });
   }),
   http.post('**/api/v2/auth/login', () => {
@@ -67,6 +70,7 @@ export const handlers = [
       isNewUser,
       authSub: currentUser.authSub,
       email: currentUser.email,
+      name: currentUser.nickname || 'User',
       member: isNewUser ? null : currentUser,
     });
   }),
@@ -76,6 +80,9 @@ export const handlers = [
   }),
 
   http.get('**/api/v2/auth/me', () => {
+    if (!currentUser.nickname) {
+      return new HttpResponse(null, { status: 404 });
+    }
     return HttpResponse.json(currentUser);
   }),
 
@@ -83,6 +90,9 @@ export const handlers = [
   // MEMBERS
   // ============================================
   http.get('**/api/v2/members/me', () => {
+    if (!currentUser.nickname) {
+      return new HttpResponse(null, { status: 404 });
+    }
     return HttpResponse.json(currentUser);
   }),
 
@@ -98,6 +108,17 @@ export const handlers = [
       avatarUrl: member.avatarUrl,
     };
     return HttpResponse.json(publicMember);
+  }),
+
+  http.post('**/api/v2/members/signup', async ({ request }) => {
+    const body = await request.json() as any;
+    // Mock signup logic: Update currentUser with form data
+    Object.assign(currentUser, body);
+    // Ensure nickname is set so AuthInitializer doesn't redirect again
+    if (!currentUser.nickname) {
+      currentUser.nickname = '찬구'; // Fallback if they clicked "skip"
+    }
+    return HttpResponse.json(currentUser, { status: 201 });
   }),
 
   http.patch('**/api/v2/members/:memberId', async ({ params, request }) => {

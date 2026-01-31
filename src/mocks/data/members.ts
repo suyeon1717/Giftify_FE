@@ -18,7 +18,7 @@ export interface MemberPublic {
 export const currentUser: Member = {
   id: 'member-1',
   authSub: 'auth0|123456',
-  nickname: '찬구',
+  nickname: null,
   email: 'changu@example.com',
   avatarUrl: 'https://i.pravatar.cc/150?u=member1',
   role: 'USER',
