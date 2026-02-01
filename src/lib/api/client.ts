@@ -21,6 +21,14 @@ interface RequestConfig extends RequestInit {
     token?: string;
 }
 
+// Backend CommonResponse wrapper type
+interface CommonResponse<T> {
+    success: boolean;
+    data: T;
+    message?: string;
+    errors?: unknown[];
+}
+
 async function request<T>(endpoint: string, config: RequestConfig = {}): Promise<T> {
     const { token, headers, ...customConfig } = config;
 
@@ -40,20 +48,22 @@ async function request<T>(endpoint: string, config: RequestConfig = {}): Promise
         },
     });
 
-    const data = await response.json().catch(() => ({}));
+    const json = await response.json().catch(() => ({}));
 
     if (!response.ok) {
         // Handle specific error codes if needed
-        const errorMessage = data.message || 'Something went wrong';
-        const errorCode = data.code || 'UNKNOWN_ERROR';
+        const errorMessage = json.message || 'Something went wrong';
+        const errorCode = json.code || 'UNKNOWN_ERROR';
 
-        // Optional: Global error toast for specific critical errors
-        // toast.error(errorMessage);
-
-        throw new ApiError(errorMessage, errorCode, response.status, data.details);
+        throw new ApiError(errorMessage, errorCode, response.status, json.details);
     }
 
-    return data as T;
+    // Extract data from CommonResponse wrapper if present
+    if (json && typeof json === 'object' && 'success' in json && 'data' in json) {
+        return json.data as T;
+    }
+
+    return json as T;
 }
 
 export const apiClient = {
