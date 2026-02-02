@@ -12,6 +12,7 @@ import {
     Heart,
     LogOut,
     Menu,
+    Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -20,6 +21,8 @@ import { SignupButton } from '@/features/auth/components/SignupButton';
 import { UserMenu } from '@/features/auth/components/UserMenu';
 import { SearchOverlay } from '@/components/common/SearchOverlay';
 import { useCart } from '@/features/cart/hooks/useCart';
+import { useWallet } from '@/features/wallet/hooks/useWallet';
+import { formatPrice } from '@/lib/format';
 
 export type HeaderVariant = 'main' | 'detail' | 'search';
 
@@ -184,6 +187,7 @@ export function Header({
 function DesktopTopNav() {
     const { user } = useAuth();
     const { data: cart } = useCart();
+    const { data: wallet } = useWallet();
     const cartCount = cart?.items.length || 0;
 
     return (
@@ -193,6 +197,10 @@ function DesktopTopNav() {
                     <Link href="/u/me" className="flex items-center gap-1 hover:opacity-60 transition-opacity">
                         <User className="w-3 h-3" />
                         MY PAGE
+                    </Link>
+                    <Link href="/wallet" className="flex items-center gap-1 hover:opacity-60 transition-opacity">
+                        <Wallet className="w-3 h-3" />
+                        <span className="font-semibold text-primary">{formatPrice(wallet?.balance || 0)}</span>
                     </Link>
                     <Link href="/wishlist" className="flex items-center gap-1 hover:opacity-60 transition-opacity">
                         <Heart className="w-3 h-3" />
@@ -316,6 +324,9 @@ function MobileNavigationIcons() {
 
     return (
         <div className="flex items-center gap-3">
+            <Link href="/wallet">
+                <Wallet className="w-6 h-6" strokeWidth={1.5} />
+            </Link>
             <Link href="/cart" className="relative">
                 <ShoppingBag className="w-6 h-6" strokeWidth={1.5} />
                 {cartCount > 0 && (
