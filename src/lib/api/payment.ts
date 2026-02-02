@@ -31,7 +31,7 @@ export interface ConfirmPaymentResponse {
 /**
  * 충전용 Payment 생성
  * - Toss SDK 호출 전에 먼저 호출
- * - orderId, amount를 받아서 SDK에 전달
+ * - orderId, paymentId를 받아서 SDK에 전달
  */
 export async function createChargePayment(
   data: CreateChargePaymentRequest
@@ -42,7 +42,7 @@ export async function createChargePayment(
 /**
  * Payment 승인 (Toss 결제 완료 후 호출)
  * - successUrl로 리다이렉트된 후 호출
- * - 백엔드에서 금액 검증 + Toss API 승인
+ * - 백엔드에서 Toss API로 결제 검증 + 지갑 잔액 추가
  */
 export async function confirmPayment(
   data: ConfirmPaymentRequest

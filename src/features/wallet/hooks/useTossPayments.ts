@@ -16,7 +16,10 @@ interface TossPaymentMethod {
 }
 
 // 지원하는 결제 수단
-export type PaymentMethod = 'CARD' | 'TOSSPAY' | 'TRANSFER' | 'VIRTUAL_ACCOUNT' | 'MOBILE_PHONE';
+export type PaymentMethod = 'CARD' | 'TRANSFER' | 'VIRTUAL_ACCOUNT' | 'MOBILE_PHONE';
+
+// 간편결제 수단 (easyPay)
+export type EasyPayProvider = 'TOSSPAY' | 'KAKAOPAY' | 'SSGPAY' | 'PAYCO';
 
 interface TossPaymentOptions {
   method: PaymentMethod;
@@ -33,6 +36,7 @@ interface TossPaymentOptions {
   card?: {
     useEscrow?: boolean;
     flowMode?: 'DEFAULT' | 'DIRECT';
+    easyPay?: EasyPayProvider;
     useCardPoint?: boolean;
     useAppCardOnly?: boolean;
   };
@@ -49,6 +53,7 @@ interface RequestPaymentOptions {
   orderId: string;
   amount: number;
   method?: PaymentMethod;
+  easyPay?: EasyPayProvider;
   orderName?: string;
   customerEmail?: string;
   customerName?: string;
@@ -70,38 +75,8 @@ export function useTossPayments(customerKey: string): UseTossPaymentsResult {
   const [error, setError] = useState<Error | null>(null);
   const [paymentInstance, setPaymentInstance] = useState<TossPaymentMethod | null>(null);
 
-  // SDK 스크립트 로드
-  useEffect(() => {
-    const existingScript = document.querySelector(`script[src="${TOSS_SDK_URL}"]`);
-
-    if (existingScript) {
-      // 이미 로드된 경우
-      initializePayment();
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = TOSS_SDK_URL;
-    script.async = true;
-
-    script.onload = () => {
-      initializePayment();
-    };
-
-    script.onerror = () => {
-      setError(new Error('Toss Payments SDK 로드에 실패했습니다.'));
-      setIsLoading(false);
-    };
-
-    document.head.appendChild(script);
-
-    return () => {
-      // cleanup은 하지 않음 (다른 컴포넌트에서 재사용 가능)
-    };
-  }, []);
-
-  // Payment 인스턴스 초기화
-  const initializePayment = useCallback(() => {
+  // Payment 인스턴스 초기화 함수
+  const doInitialize = useCallback(() => {
     try {
       const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
 
@@ -120,17 +95,72 @@ export function useTossPayments(customerKey: string): UseTossPaymentsResult {
       setIsReady(true);
       setIsLoading(false);
     } catch (err) {
+      console.error('[TossPayments] initialization error:', err);
       setError(err instanceof Error ? err : new Error('SDK 초기화 실패'));
       setIsLoading(false);
     }
   }, [customerKey]);
 
+  // SDK 스크립트 로드
+  useEffect(() => {
+    // SDK가 이미 로드되어 있으면 바로 초기화
+    if (window.TossPayments) {
+      doInitialize();
+      return;
+    }
+
+    const existingScript = document.querySelector(`script[src="${TOSS_SDK_URL}"]`);
+
+    if (existingScript) {
+      // 스크립트 태그는 있지만 아직 로드 중인 경우 - 로드 완료를 기다림
+      const checkLoaded = setInterval(() => {
+        if (window.TossPayments) {
+          clearInterval(checkLoaded);
+          doInitialize();
+        }
+      }, 50);
+
+      // 5초 후 타임아웃
+      const timeout = setTimeout(() => {
+        clearInterval(checkLoaded);
+        if (!window.TossPayments) {
+          setError(new Error('Toss Payments SDK 로드 타임아웃'));
+          setIsLoading(false);
+        }
+      }, 5000);
+
+      return () => {
+        clearInterval(checkLoaded);
+        clearTimeout(timeout);
+      };
+    }
+
+    const script = document.createElement('script');
+    script.src = TOSS_SDK_URL;
+    script.async = true;
+
+    script.onload = () => {
+      doInitialize();
+    };
+
+    script.onerror = () => {
+      setError(new Error('Toss Payments SDK 로드에 실패했습니다.'));
+      setIsLoading(false);
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      // cleanup은 하지 않음 (다른 컴포넌트에서 재사용 가능)
+    };
+  }, [doInitialize]);
+
   // customerKey 변경 시 재초기화
   useEffect(() => {
     if (window.TossPayments && !isLoading) {
-      initializePayment();
+      doInitialize();
     }
-  }, [customerKey, initializePayment, isLoading]);
+  }, [customerKey, doInitialize, isLoading]);
 
   // 결제 요청
   const requestPayment = useCallback(
@@ -143,6 +173,7 @@ export function useTossPayments(customerKey: string): UseTossPaymentsResult {
         orderId,
         amount,
         method = 'CARD',
+        easyPay,
         orderName = 'Giftify 캐시 충전',
         customerEmail,
         customerName
@@ -168,7 +199,8 @@ export function useTossPayments(customerKey: string): UseTossPaymentsResult {
       if (method === 'CARD') {
         paymentOptions.card = {
           useEscrow: false,
-          flowMode: 'DEFAULT',
+          flowMode: easyPay ? 'DIRECT' : 'DEFAULT',
+          easyPay,
           useCardPoint: false,
           useAppCardOnly: false,
         };

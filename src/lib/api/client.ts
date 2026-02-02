@@ -59,7 +59,8 @@ async function request<T>(endpoint: string, config: RequestConfig = {}): Promise
     }
 
     // Extract data from CommonResponse wrapper if present
-    if (json && typeof json === 'object' && 'success' in json && 'data' in json) {
+    // Backend uses 'result' field instead of 'success'
+    if (json && typeof json === 'object' && 'data' in json && ('success' in json || 'result' in json)) {
         return json.data as T;
     }
 

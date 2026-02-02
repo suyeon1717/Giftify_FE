@@ -16,10 +16,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useTossPayments, type PaymentMethod } from '@/features/wallet/hooks/useTossPayments';
+import { useTossPayments } from '@/features/wallet/hooks/useTossPayments';
 import { createChargePayment } from '@/lib/api/payment';
 
 interface ChargeModalProps {
@@ -34,11 +32,11 @@ const MAX_CHARGE_AMOUNT = 1000000;
 export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CARD');
 
   // 회원 정보 가져오기
   const { user } = useAuth();
-  const customerKey = user?.sub ?? 'anonymous';
+  // Toss는 customerKey에 | 문자를 허용하지 않으므로 _ 로 대체
+  const customerKey = (user?.sub ?? 'anonymous').replace(/\|/g, '_');
 
   // Toss SDK 훅
   const { isReady: isTossReady, isLoading: isTossLoading, requestPayment } = useTossPayments(customerKey);
@@ -78,7 +76,8 @@ export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
       await requestPayment({
         orderId: paymentResult.orderId,
         amount: paymentResult.amount,
-        method: paymentMethod,
+        method: 'CARD',
+        easyPay: 'TOSSPAY',
         orderName: 'Giftify 캐시 충전',
         customerEmail: user?.email ?? undefined,
         customerName: user?.name ?? undefined,
@@ -112,7 +111,6 @@ export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
       // 모달 닫힐 때 상태 초기화
       setSelectedAmount(null);
       setCustomAmount('');
-      setPaymentMethod('CARD');
     }
     onOpenChange(isOpen);
   };
@@ -154,44 +152,10 @@ export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
             </p>
           </div>
 
-          {/* 결제 수단 선택 */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">결제 수단</Label>
-            <RadioGroup
-              value={paymentMethod}
-              onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
-              className="grid grid-cols-2 gap-3"
-              disabled={isProcessing}
-            >
-              <div>
-                <RadioGroupItem
-                  value="CARD"
-                  id="card"
-                  className="peer sr-only"
-                />
-                <Label
-                  htmlFor="card"
-                  className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                >
-                  <span className="text-2xl mb-1">💳</span>
-                  <span className="text-sm font-medium">카드 결제</span>
-                </Label>
-              </div>
-              <div>
-                <RadioGroupItem
-                  value="TOSSPAY"
-                  id="tosspay"
-                  className="peer sr-only"
-                />
-                <Label
-                  htmlFor="tosspay"
-                  className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                >
-                  <span className="text-2xl mb-1">🔵</span>
-                  <span className="text-sm font-medium">토스페이</span>
-                </Label>
-              </div>
-            </RadioGroup>
+          {/* 토스페이로 결제됩니다 */}
+          <div className="flex items-center justify-center gap-2 rounded-md border-2 border-primary bg-primary/5 p-3">
+            <span className="text-xl">🔵</span>
+            <span className="text-sm font-medium">토스페이로 결제됩니다</span>
           </div>
 
           {isTossLoading && (

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { ArrowUpCircle, ArrowDownCircle, RefreshCcw } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import type { WalletTransaction, TransactionType } from '@/types/wallet';
 
 interface TransactionHistoryProps {
@@ -11,13 +11,13 @@ interface TransactionHistoryProps {
 const TRANSACTION_ICONS = {
     CHARGE: ArrowUpCircle,
     PAYMENT: ArrowDownCircle,
-    REFUND: RefreshCcw,
+    WITHDRAW: ArrowDownCircle,
 };
 
 const TRANSACTION_LABELS = {
     CHARGE: '충전',
     PAYMENT: '사용',
-    REFUND: '환불',
+    WITHDRAW: '출금',
 };
 
 /**
@@ -54,7 +54,7 @@ export function TransactionHistory({ transactions, filterType, onFilterChange }:
                         >
                             전체
                         </button>
-                        {(['CHARGE', 'PAYMENT', 'REFUND'] as TransactionType[]).map((type) => (
+                        {(['CHARGE', 'PAYMENT', 'WITHDRAW'] as TransactionType[]).map((type) => (
                             <button
                                 key={type}
                                 onClick={() => onFilterChange(type)}
@@ -81,7 +81,7 @@ export function TransactionHistory({ transactions, filterType, onFilterChange }:
                 <div className="divide-y divide-border">
                     {transactions.map((tx) => {
                         const Icon = TRANSACTION_ICONS[tx.type];
-                        const isPositive = tx.type === 'CHARGE' || tx.type === 'REFUND';
+                        const isPositive = tx.type === 'CHARGE';
 
                         return (
                             <div key={tx.id} className="flex items-center gap-4 py-4">
