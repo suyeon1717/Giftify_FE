@@ -46,7 +46,7 @@ export function WalletBalance({ balance, onCharge, onWithdraw, onRefresh, isRefr
                             출금
                         </Button>
                     )}
-                    <Button onClick={onCharge} variant="outline" size="sm">
+                    <Button onClick={onCharge} variant="default" size="sm">
                         <Plus className="h-4 w-4 mr-1" strokeWidth={1.5} />
                         충전
                     </Button>
