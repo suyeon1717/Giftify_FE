@@ -24,6 +24,10 @@ vi.mock('@/features/wallet/hooks/useWalletMutations', () => ({
         mutateAsync: vi.fn(),
         isPending: false,
     })),
+    useWithdrawWallet: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+    })),
 }));
 
 // Setup mock for toast

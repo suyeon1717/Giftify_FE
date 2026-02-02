@@ -7,6 +7,7 @@ vi.mock('next/navigation', () => ({
     useRouter: () => ({
         push: vi.fn(),
     }),
+    usePathname: () => '/u/user-1',
 }));
 
 vi.mock('@/components/layout/AppShell', () => ({
@@ -24,6 +25,36 @@ vi.mock('next/image', () => ({
 // Mock basic components used in UserHomePage
 vi.mock('@/components/common/FundingCard', () => ({
     FundingCard: ({ funding }: any) => <div data-testid="funding-card">{funding.product.name}</div>,
+}));
+
+// Mock useProfile hook
+vi.mock('@/features/profile/hooks/useProfile', () => ({
+    useProfile: () => ({
+        data: {
+            id: 1,
+            nickname: 'Giftify Curator',
+            avatarUrl: 'https://example.com/avatar.jpg',
+        },
+        isLoading: false,
+        error: null,
+    }),
+}));
+
+// Mock useMyOrganizedFundings hook
+vi.mock('@/features/funding/hooks/useFunding', () => ({
+    useMyOrganizedFundings: () => ({
+        data: {
+            items: [
+                {
+                    id: 1,
+                    status: 'IN_PROGRESS',
+                    product: { name: 'Test Funding' },
+                },
+            ],
+        },
+        isLoading: false,
+        error: null,
+    }),
 }));
 
 describe('UserHomePage', () => {
