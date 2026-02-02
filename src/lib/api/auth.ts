@@ -9,10 +9,6 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
   return apiClient.post<LoginResponse>('/api/v2/auth/login', data);
 }
 
-export async function logout(): Promise<void> {
-  return apiClient.post<void>('/api/v2/auth/logout', {});
-}
-
 export async function getMe(): Promise<Member> {
   return apiClient.get<Member>('/api/v2/members/me');
 }
