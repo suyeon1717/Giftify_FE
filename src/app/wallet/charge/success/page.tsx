@@ -3,11 +3,10 @@
 import { Suspense, useEffect, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, Loader2, XCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { confirmPayment } from '@/lib/api/payment';
 import { queryKeys } from '@/lib/query/keys';
 
@@ -20,16 +19,20 @@ interface ErrorState {
 
 function LoadingFallback() {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <Card className="w-full max-w-md">
-        <CardContent className="flex flex-col items-center gap-4 py-12">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <div className="text-center">
-            <p className="text-lg font-semibold">페이지 로딩 중...</p>
-            <p className="text-sm text-muted-foreground">잠시만 기다려주세요.</p>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="w-full max-w-[540px] flex flex-col items-center gap-8">
+        <img 
+          src="https://static.toss.im/lotties/loading-spot-apng.png" 
+          alt="로딩" 
+          width={120} 
+          height={120}
+          className="animate-pulse"
+        />
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">페이지 로딩 중...</h2>
+          <p className="text-muted-foreground">잠시만 기다려주세요.</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -42,20 +45,22 @@ function ChargeSuccessContent() {
   const [status, setStatus] = useState<PageStatus>('loading');
   const [error, setError] = useState<ErrorState | null>(null);
   const [amount, setAmount] = useState<number>(0);
+  const [orderId, setOrderId] = useState<string>('');
+  const [paymentKeyValue, setPaymentKeyValue] = useState<string>('');
 
   useEffect(() => {
     const processPayment = async () => {
       try {
         // URL에서 Toss 결제 결과 파라미터 추출
         const paymentKey = searchParams.get('paymentKey');
-        const orderId = searchParams.get('orderId');
+        const orderIdParam = searchParams.get('orderId');
         const amountParam = searchParams.get('amount');
 
         // sessionStorage에서 paymentId 가져오기
         const paymentIdStr = sessionStorage.getItem('pendingPaymentId');
 
         // 필수 파라미터 검증
-        if (!paymentKey || !orderId || !amountParam || !paymentIdStr) {
+        if (!paymentKey || !orderIdParam || !amountParam || !paymentIdStr) {
           throw {
             code: 'INVALID_PARAMS',
             message: '결제 정보가 올바르지 않습니다.',
@@ -65,12 +70,14 @@ function ChargeSuccessContent() {
         const paymentId = parseInt(paymentIdStr, 10);
         const parsedAmount = parseInt(amountParam, 10);
         setAmount(parsedAmount);
+        setOrderId(orderIdParam);
+        setPaymentKeyValue(paymentKey);
 
         // 백엔드에 결제 승인 요청
         const result = await confirmPayment({
           paymentId,
           paymentKey,
-          orderId,
+          orderId: orderIdParam,
           amount: parsedAmount,
         });
 
@@ -105,77 +112,151 @@ function ChargeSuccessContent() {
     processPayment();
   }, [searchParams, queryClient]);
 
-  const handleGoToWallet = () => {
-    router.push('/wallet');
-  };
-
-  const handleRetry = () => {
-    router.push('/wallet');
-  };
-
+  // 로딩 화면 - 결제 승인 대기
   if (status === 'loading') {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center gap-4 py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <div className="text-center">
-              <p className="text-lg font-semibold">결제 처리 중...</p>
-              <p className="text-sm text-muted-foreground">잠시만 기다려주세요.</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-[540px] flex flex-col items-center justify-between min-h-[400px]">
+          <div className="flex flex-col items-center">
+            <img 
+              src="https://static.toss.im/lotties/loading-spot-apng.png" 
+              alt="로딩" 
+              width={120} 
+              height={120}
+            />
+            <h2 className="mt-8 text-2xl font-bold text-foreground text-center">
+              결제 요청까지 성공했어요.
+            </h2>
+            <p className="mt-2 text-muted-foreground text-center">
+              결제 승인을 처리하고 있습니다...
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // 에러 화면
   if (status === 'error') {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4">
-              <XCircle className="h-16 w-16 text-destructive" />
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-[540px] flex flex-col items-center">
+          <img 
+            src="https://static.toss.im/lotties/error-spot-no-loop-space-apng.png" 
+            alt="에러" 
+            width={160} 
+            height={160}
+          />
+          <h2 className="mt-8 text-2xl font-bold text-foreground">결제를 실패했어요</h2>
+          
+          <div className="mt-14 w-full space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-[#333d48]">code</span>
+              <span className="text-muted-foreground text-right break-all pl-4">
+                {error?.code || '-'}
+              </span>
             </div>
-            <CardTitle>결제 실패</CardTitle>
-            <CardDescription>{error?.message ?? '결제 처리 중 오류가 발생했습니다.'}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {error?.code && (
-              <p className="text-center text-xs text-muted-foreground">에러 코드: {error.code}</p>
-            )}
-            <Button onClick={handleRetry} className="w-full">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-[#333d48]">message</span>
+              <span className="text-muted-foreground text-right break-all pl-4">
+                {error?.message || '-'}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-8 w-full space-y-4">
+            <Button 
+              onClick={() => router.push('/wallet')} 
+              className="w-full"
+            >
               다시 시도하기
             </Button>
-          </CardContent>
-        </Card>
+            <div className="flex gap-4">
+              <Button 
+                variant="secondary"
+                onClick={() => router.push('/')} 
+                className="flex-1"
+              >
+                홈으로
+              </Button>
+              <Button 
+                variant="secondary"
+                asChild
+                className="flex-1"
+              >
+                <Link href="https://docs.tosspayments.com/reference/error-codes" target="_blank">
+                  에러코드 문서보기
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // 성공 화면
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <CheckCircle className="h-16 w-16 text-green-500" />
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="w-full max-w-[540px] flex flex-col items-center">
+        <img 
+          src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png" 
+          alt="성공" 
+          width={120} 
+          height={120}
+        />
+        <h2 className="mt-8 text-2xl font-bold text-foreground">충전을 완료했어요</h2>
+        
+        <div className="mt-14 w-full space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-[#333d48]">충전 금액</span>
+            <span className="text-muted-foreground font-medium">
+              {amount.toLocaleString()}원
+            </span>
           </div>
-          <CardTitle>충전 완료!</CardTitle>
-          <CardDescription>포인트가 성공적으로 충전되었습니다.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-lg bg-muted p-4 text-center">
-            <p className="text-sm text-muted-foreground">충전 금액</p>
-            <p className="text-2xl font-bold">{amount.toLocaleString()}원</p>
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-[#333d48]">주문번호</span>
+            <span className="text-muted-foreground text-right break-all pl-4 text-sm">
+              {orderId}
+            </span>
           </div>
-          <Button onClick={handleGoToWallet} className="w-full">
+          <div className="flex justify-between items-start">
+            <span className="font-semibold text-[#333d48]">paymentKey</span>
+            <span className="text-muted-foreground text-right break-all pl-4 text-xs max-w-[280px]">
+              {paymentKeyValue}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-8 w-full space-y-4">
+          <Button 
+            onClick={() => router.push('/wallet')} 
+            className="w-full"
+          >
             지갑으로 이동
           </Button>
-          <p className="text-center text-[11px] text-muted-foreground">
-            ※ 본 결제는 테스트 결제이며 실제 비용이 청구되지 않았습니다.
-          </p>
-        </CardContent>
-      </Card>
+          <div className="flex gap-4">
+            <Button 
+              variant="secondary"
+              onClick={() => router.push('/')} 
+              className="flex-1"
+            >
+              홈으로
+            </Button>
+            <Button 
+              variant="secondary"
+              onClick={() => router.push('/wallet')} 
+              className="flex-1"
+            >
+              다시 충전하기
+            </Button>
+          </div>
+        </div>
+
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          ※ 본 결제는 테스트 결제이며 실제 비용이 청구되지 않았습니다.
+        </p>
+      </div>
     </div>
   );
 }

@@ -3,22 +3,21 @@
 import { useState } from 'react';
 
 import { useMutation } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CreditCard, Smartphone, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useTossPayments } from '@/features/wallet/hooks/useTossPayments';
+import { useTossPayments, PaymentMethod } from '@/features/wallet/hooks/useTossPayments';
 import { createChargePayment } from '@/lib/api/payment';
+import { cn } from '@/lib/utils';
 
 interface ChargeModalProps {
   open: boolean;
@@ -29,9 +28,17 @@ const CHARGE_AMOUNTS = [10000, 30000, 50000, 100000];
 const MIN_CHARGE_AMOUNT = 1000;
 const MAX_CHARGE_AMOUNT = 1000000;
 
+// 결제 수단 옵션
+const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: React.ReactNode }[] = [
+  { value: 'CARD', label: '카드', icon: <CreditCard className="h-5 w-5" /> },
+  { value: 'TRANSFER', label: '계좌이체', icon: <Building2 className="h-5 w-5" /> },
+  { value: 'MOBILE_PHONE', label: '휴대폰', icon: <Smartphone className="h-5 w-5" /> },
+];
+
 export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [customAmount, setCustomAmount] = useState<string>('');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('CARD');
 
   // 회원 정보 가져오기
   const { user } = useAuth();
@@ -76,8 +83,7 @@ export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
       await requestPayment({
         orderId: paymentResult.orderId,
         amount: paymentResult.amount,
-        method: 'CARD',
-        easyPay: 'TOSSPAY',
+        method: selectedMethod,
         orderName: 'Giftify 캐시 충전',
         customerEmail: user?.email ?? undefined,
         customerName: user?.name ?? undefined,
@@ -111,78 +117,111 @@ export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
       // 모달 닫힐 때 상태 초기화
       setSelectedAmount(null);
       setCustomAmount('');
+      setSelectedMethod('CARD');
     }
     onOpenChange(isOpen);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>포인트 충전</DialogTitle>
-          <DialogDescription>충전할 금액을 선택하거나 직접 입력해주세요.</DialogDescription>
+      <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <DialogTitle className="text-xl font-bold">포인트 충전</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-3">
-            {CHARGE_AMOUNTS.map((presetAmount) => (
-              <Button
-                key={presetAmount}
-                variant={selectedAmount === presetAmount ? 'default' : 'outline'}
-                className={selectedAmount === presetAmount ? 'border-primary' : ''}
-                onClick={() => handlePresetAmountClick(presetAmount)}
+        
+        <div className="px-6 py-5 space-y-6">
+          {/* 충전 금액 선택 */}
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-[#333d48]">충전 금액</label>
+            <div className="grid grid-cols-2 gap-2">
+              {CHARGE_AMOUNTS.map((presetAmount) => (
+                <button
+                  key={presetAmount}
+                  type="button"
+                  className={cn(
+                    "py-3 px-4 rounded-lg border text-sm font-medium transition-all",
+                    selectedAmount === presetAmount
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background hover:border-primary/50 text-foreground"
+                  )}
+                  onClick={() => handlePresetAmountClick(presetAmount)}
+                  disabled={isProcessing}
+                >
+                  {presetAmount.toLocaleString()}원
+                </button>
+              ))}
+            </div>
+            <div className="relative">
+              <Input
+                type="number"
+                placeholder="직접 입력"
+                value={customAmount}
+                onChange={(e) => handleCustomAmountChange(e.target.value)}
+                min={MIN_CHARGE_AMOUNT}
+                max={MAX_CHARGE_AMOUNT}
                 disabled={isProcessing}
-              >
-                {presetAmount.toLocaleString()}원
-              </Button>
-            ))}
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">직접 입력</label>
-            <Input
-              type="number"
-              placeholder="충전할 금액을 입력하세요"
-              value={customAmount}
-              onChange={(e) => handleCustomAmountChange(e.target.value)}
-              min={MIN_CHARGE_AMOUNT}
-              max={MAX_CHARGE_AMOUNT}
-              disabled={isProcessing}
-            />
+                className="pr-8"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                원
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground">
               {MIN_CHARGE_AMOUNT.toLocaleString()}원 ~ {MAX_CHARGE_AMOUNT.toLocaleString()}원
             </p>
           </div>
 
-          {/* 토스페이로 결제됩니다 */}
-          <div className="flex items-center justify-center gap-2 rounded-md border bg-secondary/30 p-3">
-            <span className="text-xl">🔵</span>
-            <span className="text-sm font-medium">토스페이로 결제됩니다</span>
+          {/* 결제 수단 선택 */}
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-[#333d48]">결제 수단</label>
+            <div className="grid grid-cols-3 gap-2">
+              {PAYMENT_METHODS.map((method) => (
+                <button
+                  key={method.value}
+                  type="button"
+                  className={cn(
+                    "flex flex-col items-center gap-2 py-4 px-3 rounded-lg border transition-all",
+                    selectedMethod === method.value
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border bg-background hover:border-primary/50 text-muted-foreground"
+                  )}
+                  onClick={() => setSelectedMethod(method.value)}
+                  disabled={isProcessing}
+                >
+                  {method.icon}
+                  <span className="text-xs font-medium">{method.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="rounded-md bg-amber-50 p-3 border border-amber-200">
-            <p className="text-xs text-amber-800 font-medium text-center">
-              ⚠️ 본 결제는 테스트 결제입니다.
-              <br />
+          {/* 테스트 결제 안내 */}
+          <div className="rounded-lg bg-[#fff8e6] border border-[#ffcc00]/30 p-4">
+            <p className="text-xs text-[#8a6d00] font-medium text-center leading-relaxed">
+              ⚠️ 본 결제는 테스트 결제입니다.<br />
               실제 결제가 발생하지 않으니 안심하고 진행해주세요.
             </p>
           </div>
 
           {isTossLoading && (
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               결제 시스템 준비 중...
             </div>
           )}
         </div>
-        <DialogFooter>
+
+        {/* 결제 버튼 */}
+        <div className="px-6 py-4 bg-muted/30 border-t">
           <Button
-            className="w-full font-bold"
+            className="w-full h-12 text-base font-bold bg-[#3282f6] hover:bg-[#1b64da]"
             onClick={handleCharge}
             disabled={!isValidAmount || isProcessing || !isTossReady}
           >
-            {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isProcessing && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             {amount > 0 ? `${amount.toLocaleString()}원 충전하기` : '금액을 선택해주세요'}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

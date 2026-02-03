@@ -2,11 +2,10 @@
 
 import { Suspense, useEffect, useState } from 'react';
 
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface FailInfo {
   code: string;
@@ -33,16 +32,20 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 function LoadingFallback() {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <Card className="w-full max-w-md">
-        <CardContent className="flex flex-col items-center gap-4 py-12">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <div className="text-center">
-            <p className="text-lg font-semibold">페이지 로딩 중...</p>
-            <p className="text-sm text-muted-foreground">잠시만 기다려주세요.</p>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="w-full max-w-[540px] flex flex-col items-center gap-8">
+        <img 
+          src="https://static.toss.im/lotties/loading-spot-apng.png" 
+          alt="로딩" 
+          width={120} 
+          height={120}
+          className="animate-pulse"
+        />
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">페이지 로딩 중...</h2>
+          <p className="text-muted-foreground">잠시만 기다려주세요.</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -73,38 +76,61 @@ function ChargeFailContent() {
     });
   }, [searchParams]);
 
-  const handleRetry = () => {
-    router.push('/wallet');
-  };
-
-  const handleGoHome = () => {
-    router.push('/');
-  };
-
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <AlertTriangle className="h-16 w-16 text-amber-500" />
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="w-full max-w-[540px] flex flex-col items-center">
+        <img 
+          src="https://static.toss.im/lotties/error-spot-no-loop-space-apng.png" 
+          alt="에러" 
+          width={160} 
+          height={160}
+        />
+        <h2 className="mt-8 text-2xl font-bold text-foreground">결제를 실패했어요</h2>
+        
+        <div className="mt-14 w-full space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-[#333d48]">code</span>
+            <span className="text-muted-foreground text-right break-all pl-4">
+              {failInfo.code || '-'}
+            </span>
           </div>
-          <CardTitle>결제 실패</CardTitle>
-          <CardDescription>{failInfo.message}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {failInfo.code && (
-            <p className="text-center text-xs text-muted-foreground">에러 코드: {failInfo.code}</p>
-          )}
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleGoHome} className="flex-1">
-              홈으로
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-[#333d48]">message</span>
+            <span className="text-muted-foreground text-right break-all pl-4">
+              {failInfo.message || '-'}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-8 w-full space-y-4">
+          <Button 
+            onClick={() => router.push('/wallet')} 
+            className="w-full"
+          >
+            다시 시도하기
+          </Button>
+          <div className="flex gap-4">
+            <Button 
+              variant="secondary"
+              asChild
+              className="flex-1"
+            >
+              <Link href="https://docs.tosspayments.com/reference/error-codes" target="_blank">
+                에러코드 문서보기
+              </Link>
             </Button>
-            <Button onClick={handleRetry} className="flex-1">
-              다시 시도
+            <Button 
+              variant="secondary"
+              asChild
+              className="flex-1"
+            >
+              <Link href="https://techchat.tosspayments.com" target="_blank">
+                실시간 문의하기
+              </Link>
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
