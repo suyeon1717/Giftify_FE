@@ -73,15 +73,26 @@ export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
     }
 
     try {
-      // 1. Payment 레코드 생성
-      const paymentResult = await createPaymentMutation.mutateAsync({ amount });
+      // 1. orderId 생성 (재시도 시 동일한 값 사용)
+      let orderId = localStorage.getItem('pending_charge');
+      if (!orderId) {
+        orderId = `CHG-${crypto.randomUUID()}`;
+        localStorage.setItem('pending_charge', orderId);
+      }
 
-      // 2. paymentId를 sessionStorage에 저장 (success 페이지에서 사용)
+      // 2. Payment 레코드 생성 (orderId 전달)
+      const paymentResult = await createPaymentMutation.mutateAsync({ 
+        amount,
+        orderId 
+      });
+
+      // 3. paymentId를 sessionStorage에 저장 (success 페이지에서 confirm 시 사용)
+      // Note: orderId는 이미 localStorage에 'pending_charge'로 저장되어 있음
       sessionStorage.setItem('pendingPaymentId', paymentResult.paymentId.toString());
 
-      // 3. Toss SDK 결제창 호출 (리다이렉트됨)
+      // 4. Toss SDK 결제창 호출 (리다이렉트됨)
       await requestPayment({
-        orderId: paymentResult.orderId,
+        orderId: paymentResult.orderId, // 서버에서 반환받은 값 (요청한 값과 동일)
         amount: paymentResult.amount,
         method: selectedMethod,
         orderName: 'Giftify 캐시 충전',
@@ -89,16 +100,22 @@ export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
         customerName: user?.name ?? undefined,
       });
 
-      // 여기까지 오면 사용자가 결제창을 닫은 것
-      // (성공 시 successUrl로 리다이렉트되므로 여기까지 안 옴)
+      // 여기까지 오면 사용자가 결제창을 닫은 것 (성공 시 리다이렉트)
     } catch (error) {
       // 사용자가 결제창 닫기 또는 에러
       console.error('결제 요청 실패:', error);
       sessionStorage.removeItem('pendingPaymentId');
+      
       // Toss SDK에서 취소한 경우 에러 메시지 표시하지 않음
       if (error instanceof Error && !error.message.includes('사용자')) {
         toast.error('결제 요청 중 오류가 발생했습니다.');
       }
+      
+      // 에러가 나더라도 'pending_charge' (orderId)는 유지하여 
+      // 사용자가 다시 '충전하기'를 누를 때 동일한 orderId로 재시도할 수 있게 함.
+      // (단, 여기서는 retry UI가 별도로 없으므로 모달이 닫히면 초기화될 수 있음. 
+      //  완전한 재시도 처리를 위해선 모달 생명주기 관리 필요하지만, 
+      //  최소한 연속 클릭 시의 중복 방지는 됨)
     }
   };
 

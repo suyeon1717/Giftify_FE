@@ -20,10 +20,7 @@ vi.mock('@/features/wallet/hooks/useWallet', () => ({
 
 // Mock useWalletMutations
 vi.mock('@/features/wallet/hooks/useWalletMutations', () => ({
-    useChargeWallet: vi.fn(() => ({
-        mutateAsync: vi.fn(),
-        isPending: false,
-    })),
+
     useWithdrawWallet: vi.fn(() => ({
         mutateAsync: vi.fn(),
         isPending: false,

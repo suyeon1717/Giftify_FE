@@ -96,7 +96,9 @@ export default function MyWishlistPage() {
     };
 
     // Filter items
-    const filteredItems = wishlist?.items.filter(item => {
+    // Filter items
+    const wishlistItems = wishlist?.items || [];
+    const filteredItems = wishlistItems.filter(item => {
         // Status filter
         if (activeStatus && item.status !== activeStatus) return false;
 
@@ -109,14 +111,15 @@ export default function MyWishlistPage() {
         }
 
         return true;
-    }) || [];
+    });
 
     // Count by status
+    const items = wishlist?.items || [];
     const countByStatus = {
-        '': wishlist?.items.length || 0,
-        'AVAILABLE': wishlist?.items.filter(i => i.status === 'AVAILABLE').length || 0,
-        'IN_FUNDING': wishlist?.items.filter(i => i.status === 'IN_FUNDING').length || 0,
-        'FUNDED': wishlist?.items.filter(i => i.status === 'FUNDED').length || 0,
+        '': items.length,
+        'AVAILABLE': items.filter(i => i.status === 'AVAILABLE').length,
+        'IN_FUNDING': items.filter(i => i.status === 'IN_FUNDING').length,
+        'FUNDED': items.filter(i => i.status === 'FUNDED').length,
     };
 
     // Loading state
@@ -309,7 +312,7 @@ export default function MyWishlistPage() {
                             <div className="flex items-center justify-between">
                                 <h1 className="text-lg font-semibold">LIKE</h1>
                                 <span className="text-sm text-muted-foreground">
-                                    {wishlist?.items.length || 0}개
+                                    {wishlist?.items?.length || 0}개
                                 </span>
                             </div>
                         </div>

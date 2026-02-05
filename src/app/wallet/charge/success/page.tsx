@@ -84,6 +84,7 @@ function ChargeSuccessContent() {
         if (result.success) {
           // 성공: sessionStorage 정리 및 캐시 무효화
           sessionStorage.removeItem('pendingPaymentId');
+          localStorage.removeItem('pending_charge');
           queryClient.invalidateQueries({ queryKey: queryKeys.wallet });
           queryClient.invalidateQueries({ queryKey: queryKeys.walletHistory() });
           setStatus('success');
