@@ -4,16 +4,16 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-} from '@/components/ui/sheet';
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useUpdateProfile } from '@/features/profile/hooks/useProfile';
 import type { Member } from '@/types/member';
 
-interface ProfileEditSheetProps {
+interface ProfileEditModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     member: Member;
@@ -98,20 +98,20 @@ function ProfileEditForm({ member, onCancel, onSuccess }: { member: Member; onCa
     );
 }
 
-export function ProfileEditSheet({
+export function ProfileEditModal({
     open,
     onOpenChange,
     member,
-}: ProfileEditSheetProps) {
+}: ProfileEditModalProps) {
     return (
-        <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent side="bottom" className="rounded-t-3xl">
-                <SheetHeader>
-                    <SheetTitle>프로필 수정</SheetTitle>
-                    <SheetDescription>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>프로필 수정</DialogTitle>
+                    <DialogDescription>
                         닉네임을 변경할 수 있습니다
-                    </SheetDescription>
-                </SheetHeader>
+                    </DialogDescription>
+                </DialogHeader>
 
                 {open && (
                     <ProfileEditForm
@@ -120,7 +120,7 @@ export function ProfileEditSheet({
                         onSuccess={() => onOpenChange(false)}
                     />
                 )}
-            </SheetContent>
-        </Sheet>
+            </DialogContent>
+        </Dialog>
     );
 }

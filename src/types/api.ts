@@ -44,3 +44,13 @@ export interface PageParams {
     size?: number;
     sort?: string;
 }
+
+/**
+ * Common Response Wrapper (RsData)
+ */
+export interface RsData<T> {
+    result: 'SUCCESS' | 'FAIL';
+    data: T | null;
+    message: string | null;
+    errorCode: string | null;
+}

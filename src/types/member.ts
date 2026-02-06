@@ -53,3 +53,13 @@ export interface LoginResponse {
     name: string;    // Added
     member: Member | null; // Nullable
 }
+
+export interface RegistrationStatusResponse {
+    registered: boolean;
+    member: Member | null;
+}
+
+export interface NicknameCheckResponse {
+    available: boolean;
+    nickname: string;
+}

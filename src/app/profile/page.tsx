@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/AppShell';
 import { Footer } from '@/components/layout/Footer';
-import { ProfileEditSheet } from '@/features/profile/components/ProfileEditSheet';
+import { ProfileEditModal } from '@/features/profile/components/ProfileEditModal';
 import { ChargeModal } from '@/features/wallet/components/ChargeModal';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -445,7 +445,7 @@ export default function ProfilePage() {
                 </main>
             </div>
 
-            <ProfileEditSheet
+            <ProfileEditModal
                 open={isEditSheetOpen}
                 onOpenChange={setIsEditSheetOpen}
                 member={member}

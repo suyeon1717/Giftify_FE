@@ -53,15 +53,24 @@ async function request<T>(endpoint: string, config: RequestConfig = {}): Promise
     if (!response.ok) {
         // Handle specific error codes if needed
         const errorMessage = json.message || 'Something went wrong';
-        const errorCode = json.code || 'UNKNOWN_ERROR';
+        // Support RsData errorCode first, fallback to code
+        const errorCode = json.errorCode || json.code || 'UNKNOWN_ERROR';
 
         throw new ApiError(errorMessage, errorCode, response.status, json.details);
     }
 
     // Extract data from CommonResponse wrapper if present
-    // Backend uses 'result' field instead of 'success'
-    if (json && typeof json === 'object' && 'data' in json && ('success' in json || 'result' in json)) {
-        return json.data as T;
+    // Backend uses 'result' field instead of 'success' for RsData
+    if (json && typeof json === 'object' && ('success' in json || 'result' in json)) {
+        // If result is FAIL (conceptually should be caught by !response.ok if status is used correctly, 
+        // but just in case of 200 OK with FAIL result)
+        if ('result' in json && json.result === 'FAIL') {
+             const errorMessage = json.message || 'Operation failed';
+             const errorCode = json.errorCode || 'UNKNOWN_ERROR';
+             throw new ApiError(errorMessage, errorCode, response.status, json.data);
+        }
+        
+        return ('data' in json ? json.data : json) as T;
     }
 
     return json as T;
