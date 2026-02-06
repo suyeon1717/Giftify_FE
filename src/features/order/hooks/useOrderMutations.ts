@@ -1,22 +1,44 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query/keys';
-import { createOrder } from '@/lib/api/orders';
-import type { OrderCreateRequest } from '@/types/order';
+import { placeOrder } from '@/lib/api/orders';
+import type { PlaceOrderRequest, PlaceOrderResult } from '@/types/order';
 
 /**
- * Hook to create a new order from selected cart items
+ * Hook to place an order with payment (V2 unified API)
  *
- * Invalidates: orders, cart
+ * @note V2 API는 주문 생성과 결제를 한 번에 처리합니다.
+ *       별도의 Payment API 호출이 필요하지 않습니다.
  *
- * Note: Payment should be handled separately via useCreatePayment
+ * Invalidates: orders, cart, myParticipatedFundings, myOrganizedFundings
+ */
+export function usePlaceOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: PlaceOrderRequest): Promise<PlaceOrderResult> => {
+      const idempotencyKey = crypto.randomUUID();
+      return placeOrder(request, idempotencyKey);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cart });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myParticipatedFundings });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myOrganizedFundings });
+    },
+  });
+}
+
+/**
+ * @deprecated Use usePlaceOrder instead
  */
 export function useCreateOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data?: OrderCreateRequest) => {
-      const idempotencyKey = crypto.randomUUID();
-      return createOrder(data, idempotencyKey);
+    mutationFn: async (_data?: { cartItemIds?: string[] }) => {
+      throw new Error(
+        'useCreateOrder is deprecated. Use usePlaceOrder with items[] and method instead.'
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders });

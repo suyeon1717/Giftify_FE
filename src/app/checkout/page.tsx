@@ -11,8 +11,39 @@ import { Loader2, Wallet, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCart } from '@/features/cart/hooks/useCart';
 import { useWallet } from '@/features/wallet/hooks/useWallet';
-import { useCreateOrder } from '@/features/order/hooks/useOrderMutations';
-import { useCreatePayment } from '@/features/payment/hooks/usePayment';
+import { usePlaceOrder } from '@/features/order/hooks/useOrderMutations';
+import type { PlaceOrderItemRequest, OrderItemType } from '@/types/order';
+import type { CartItem } from '@/types/cart';
+
+/**
+ * Cart 아이템을 PlaceOrderItemRequest로 변환
+ *
+ * @note 현재 Cart 응답에 receiverId가 없어 임시값 사용
+ * @todo 백엔드에서 Cart 아이템에 receiverId 포함하거나,
+ *       Cart 기반 주문 API 추가 필요
+ */
+function cartItemToOrderItem(item: CartItem): PlaceOrderItemRequest {
+    // isNewFunding이 true면 FUNDING_PENDING, 아니면 FUNDING
+    const orderItemType: OrderItemType = item.isNewFunding ? 'FUNDING_PENDING' : 'FUNDING';
+
+    // wishlistItemId: FUNDING_PENDING은 wishItemId, FUNDING은 fundingId
+    // 백엔드는 wishlistItemId를 기대하지만, FUNDING 타입의 경우 fundingId만 있음
+    // TODO: 백엔드와 협의 필요 - FUNDING 타입에서 wishlistItemId 대신 fundingId 사용 가능 여부
+    const wishlistItemId = item.isNewFunding
+        ? parseInt(item.funding.wishItemId, 10)
+        : parseInt(item.fundingId, 10); // FUNDING 타입에서 임시로 fundingId 사용
+
+    // receiverId: Cart 응답에 없음
+    // TODO: 백엔드에서 Cart 아이템에 receiverId 포함 필요
+    const receiverId = 0; // 임시값
+
+    return {
+        wishlistItemId,
+        receiverId,
+        amount: item.amount,
+        orderItemType,
+    };
+}
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -20,8 +51,7 @@ export default function CheckoutPage() {
 
     const { data: cart, isLoading: isCartLoading } = useCart();
     const { data: wallet, isLoading: isWalletLoading } = useWallet();
-    const createOrder = useCreateOrder();
-    const createPayment = useCreatePayment();
+    const placeOrder = usePlaceOrder();
 
     const selectedItems = useMemo(() => {
         return cart?.items.filter(item => item.selected) || [];
@@ -53,19 +83,16 @@ export default function CheckoutPage() {
 
         setIsProcessing(true);
         try {
-            // 1. Create order from selected cart items
-            const order = await createOrder.mutateAsync({
-                cartItemIds: selectedItems.map(item => item.id)
-            });
+            // V2 API: 주문+결제 한 번에 처리
+            const orderItems = selectedItems.map(cartItemToOrderItem);
 
-            // 2. Create payment for the order
-            await createPayment.mutateAsync({
-                orderId: order.id,
-                method: 'WALLET'
+            const result = await placeOrder.mutateAsync({
+                items: orderItems,
+                method: 'WALLET',
             });
 
             toast.success('결제가 완료되었습니다!');
-            router.push(`/checkout/complete?orderId=${order.id}`);
+            router.push(`/checkout/complete?orderId=${result.orderId}`);
         } catch (error: any) {
             const errorCode = error?.code;
 

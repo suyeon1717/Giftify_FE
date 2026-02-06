@@ -1,43 +1,82 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query/keys';
 import {
-  createFunding,
-  participateFunding,
   acceptFunding,
   refuseFunding,
   type RefuseFundingRequest,
 } from '@/lib/api/fundings';
-import type { FundingCreateRequest } from '@/types/funding';
+import { getCart, addCartItem } from '@/lib/api/cart';
+import type { Cart } from '@/types/cart';
 
 /**
- * Hook to create a new funding
+ * Hook to create a new funding (add FUNDING_PENDING to cart)
  *
- * Invalidates: myWishlist, myOrganizedFundings, home
+ * @note 펀딩 생성은 장바구니에 FUNDING_PENDING 타입으로 추가한 후
+ *       checkout 플로우(주문+결제)에서 실제로 생성됩니다.
+ *
+ * Invalidates: cart
  */
 export function useCreateFunding() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: FundingCreateRequest) => createFunding(data),
+    mutationFn: async ({
+      wishItemId,
+      amount,
+    }: {
+      wishItemId: string;
+      amount: number;
+      expiresInDays?: number;
+      message?: string;
+    }) => {
+      // 1. 캐시에서 cart 조회 또는 API 호출
+      let cart = queryClient.getQueryData<Cart>(queryKeys.cart);
+      if (!cart) {
+        cart = await getCart();
+      }
+
+      // 2. 장바구니에 FUNDING_PENDING 타입으로 추가
+      await addCartItem(cart.id, {
+        wishItemId,
+        amount,
+      });
+
+      return { wishItemId, amount };
+    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.cart });
       queryClient.invalidateQueries({ queryKey: queryKeys.myWishlist });
-      queryClient.invalidateQueries({ queryKey: queryKeys.myOrganizedFundings });
-      queryClient.invalidateQueries({ queryKey: queryKeys.home });
     },
   });
 }
 
 /**
- * Hook to participate in a funding
+ * Hook to participate in a funding (add FUNDING to cart)
  *
- * Invalidates: funding(id), cart
+ * @note 펀딩 참여는 장바구니에 FUNDING 타입으로 추가한 후
+ *       checkout 플로우(주문+결제)에서 실제로 기여됩니다.
+ *
+ * Invalidates: cart
  */
 export function useParticipateFunding() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ fundingId, amount }: { fundingId: string; amount: number }) =>
-      participateFunding(fundingId, amount),
+    mutationFn: async ({ fundingId, amount }: { fundingId: string; amount: number }) => {
+      // 1. 캐시에서 cart 조회 또는 API 호출
+      let cart = queryClient.getQueryData<Cart>(queryKeys.cart);
+      if (!cart) {
+        cart = await getCart();
+      }
+
+      // 2. 장바구니에 FUNDING 타입으로 추가
+      await addCartItem(cart.id, {
+        fundingId,
+        amount,
+      });
+
+      return { fundingId, amount };
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.funding(variables.fundingId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.cart });

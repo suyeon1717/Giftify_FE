@@ -18,7 +18,6 @@ const MY_SHOPPING_MENU = [
     { label: '주문/배송 조회', href: '/orders' },
     { label: '취소/반품/교환 내역', href: '/orders/cancel' },
     { label: '결제수단 관리', href: '/payment-methods' },
-    { label: '쿠폰/포인트 내역', href: '/coupons' },
 ];
 
 // 나의 계정정보
@@ -39,9 +38,7 @@ const CUSTOMER_CENTER_MENU = [
 
 // 참여 / 혜택
 const BENEFITS_MENU = [
-    { label: 'Giftify 마일리지', href: '/mileage' },
     { label: '친구 초대하기', href: '/invite' },
-    { label: 'Giftify 이벤트', href: '/events' },
 ];
 
 const MY_ACTIVITY_MENU = [
@@ -243,25 +240,15 @@ export default function ProfilePage() {
 
                         {/* Membership Info Card - 29cm Style */}
                         <div className="border border-foreground mb-8">
-                            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
+                            <div className="grid grid-cols-2 divide-x divide-border">
                                 {/* Level */}
                                 <div className="p-5 text-center">
                                     <p className="text-[11px] text-muted-foreground mb-2">멤버십 등급 ›</p>
                                     <p className="text-lg font-semibold">Newbie</p>
                                 </div>
-                                {/* Coupons */}
-                                <div className="p-5 text-center">
-                                    <p className="text-[11px] text-muted-foreground mb-2">쿠폰 ›</p>
-                                    <p className="text-lg font-semibold">0</p>
-                                </div>
-                                {/* Points */}
+                                {/* Points only */}
                                 <div className="p-5 text-center">
                                     <p className="text-[11px] text-muted-foreground mb-2">상품 포인트 ›</p>
-                                    <p className="text-lg font-semibold">0</p>
-                                </div>
-                                {/* Credits */}
-                                <div className="p-5 text-center">
-                                    <p className="text-[11px] text-muted-foreground mb-2">적립금 ›</p>
                                     <p className="text-lg font-semibold">0</p>
                                 </div>
                             </div>
@@ -285,28 +272,6 @@ export default function ProfilePage() {
                                 >
                                     충전하기 ›
                                 </button>
-                            </div>
-                        </div>
-
-                        {/* Quick Links - Banner Style */}
-                        <div className="grid md:grid-cols-2 gap-4 mb-12">
-                            <div className="border border-border p-5 flex items-center justify-between hover:bg-secondary/30 transition-colors">
-                                <div>
-                                    <p className="font-medium mb-1 text-sm">위시 공유하고 적립금 받으세요</p>
-                                    <p className="text-xs text-muted-foreground">친구 초대 시 3,000원 적립</p>
-                                </div>
-                                <Link href="/invite" className="text-xs text-muted-foreground hover:text-foreground">
-                                    이벤트 참여하기 ›
-                                </Link>
-                            </div>
-                            <div className="border border-border p-5 flex items-center justify-between hover:bg-secondary/30 transition-colors">
-                                <div>
-                                    <p className="font-medium mb-1 text-sm">지금 Giftify 회원만의 혜택을 받으세요</p>
-                                    <p className="text-xs text-muted-foreground">신규회원 무료 펀딩 랜덤쿠폰 🎁</p>
-                                </div>
-                                <Link href="/events" className="text-xs text-muted-foreground hover:text-foreground">
-                                    이벤트 보기 ›
-                                </Link>
                             </div>
                         </div>
 

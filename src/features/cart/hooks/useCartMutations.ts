@@ -1,15 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query/keys';
 import {
+  getCart,
   addCartItem,
   updateCartItem,
   removeCartItem,
   toggleCartItemSelection,
 } from '@/lib/api/cart';
-import type { CartItemCreateRequest, CartItemUpdateRequest } from '@/types/cart';
+import type { CartItemCreateRequest, CartItemUpdateRequest, Cart } from '@/types/cart';
 
 /**
  * Hook to add an item to the cart
+ *
+ * @note 백엔드 V2 API는 POST /api/v2/carts/{cartId} 형식이므로
+ *       먼저 장바구니를 조회하여 cartId를 획득한 후 아이템을 추가합니다.
  *
  * Invalidates: cart, funding(id)
  */
@@ -17,7 +21,16 @@ export function useAddToCart() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CartItemCreateRequest) => addCartItem(data),
+    mutationFn: async (data: CartItemCreateRequest) => {
+      // 1. 캐시에서 cart 조회 또는 API 호출
+      let cart = queryClient.getQueryData<Cart>(queryKeys.cart);
+      if (!cart) {
+        cart = await getCart();
+      }
+
+      // 2. cartId로 아이템 추가
+      await addCartItem(cart.id, data);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart });
       // Also invalidate the specific funding

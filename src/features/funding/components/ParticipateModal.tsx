@@ -60,7 +60,7 @@ export function ParticipateModal({
             },
             {
                 onSuccess: () => {
-                    toast.success('펀딩 참여가 완료되었습니다!');
+                    toast.success('장바구니에 담겼습니다. 결제를 진행해주세요.');
                     onOpenChange(false);
                     onSuccess();
                     setAmount(0);

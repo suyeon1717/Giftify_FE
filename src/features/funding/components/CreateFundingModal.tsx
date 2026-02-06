@@ -14,10 +14,10 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { AmountInput } from '@/components/common/AmountInput';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateFunding } from '@/features/funding/hooks/useFundingMutations';
-import type { Funding } from '@/types/funding';
 
 interface CreateFundingModalProps {
     open: boolean;
@@ -30,7 +30,8 @@ interface CreateFundingModalProps {
             imageUrl: string;
         };
     };
-    onSuccess: (funding: Funding) => void;
+    /** 장바구니에 추가 성공 시 호출 (checkout으로 이동 권장) */
+    onSuccess: () => void;
 }
 
 export function CreateFundingModal({
@@ -39,6 +40,7 @@ export function CreateFundingModal({
     wishItem,
     onSuccess
 }: CreateFundingModalProps) {
+    const [amount, setAmount] = useState(0);
     const [expiresInDays, setExpiresInDays] = useState(14);
     const [message, setMessage] = useState('');
 
@@ -46,6 +48,16 @@ export function CreateFundingModal({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (amount <= 0) {
+            toast.error('참여 금액을 입력해주세요.');
+            return;
+        }
+
+        if (amount > wishItem.product.price) {
+            toast.error(`목표 금액은 ${wishItem.product.price.toLocaleString()}원 입니다.`);
+            return;
+        }
 
         if (message.length > 500) {
             toast.error('메시지는 최대 500자까지 입력 가능합니다.');
@@ -55,14 +67,16 @@ export function CreateFundingModal({
         createFunding.mutate(
             {
                 wishItemId: wishItem.id,
+                amount,
                 expiresInDays,
                 message: message.trim() || undefined,
             },
             {
-                onSuccess: (funding) => {
-                    toast.success('펀딩이 시작되었습니다!');
+                onSuccess: () => {
+                    toast.success('장바구니에 담겼습니다. 결제를 진행해주세요.');
                     onOpenChange(false);
-                    onSuccess(funding);
+                    onSuccess();
+                    setAmount(0);
                     setMessage('');
                     setExpiresInDays(14);
                 },
@@ -100,6 +114,20 @@ export function CreateFundingModal({
                                 <p className="font-bold mt-1">₩{wishItem.product.price.toLocaleString()}</p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* First Contribution Amount */}
+                    <div className="grid gap-3">
+                        <Label>첫 참여 금액</Label>
+                        <AmountInput
+                            value={amount}
+                            onChange={setAmount}
+                            maxAmount={wishItem.product.price}
+                            walletBalance={1000000}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            펀딩을 시작하려면 먼저 참여 금액을 입력해주세요.
+                        </p>
                     </div>
 
                     {/* Expires In Days Slider */}
