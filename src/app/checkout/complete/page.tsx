@@ -113,7 +113,7 @@ function CheckoutCompleteContent() {
                             {order.items.map((item, index) => (
                                 <div key={item.id} className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">
-                                        {item.orderItemType === 'FUNDING' ? '펀딩 참여' : '펀딩 개설'} #{index + 1}
+                                        {item.orderItemType === 'FUNDING_GIFT' ? '펀딩 참여' : '일반 주문'} #{index + 1}
                                     </span>
                                     <span className="ml-2 flex-shrink-0 font-medium">{item.amount.toLocaleString()}원</span>
                                 </div>

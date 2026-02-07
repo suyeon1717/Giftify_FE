@@ -4,27 +4,43 @@ import { PaginatedResponse } from './api';
 
 /**
  * 결제 방법
- * @see PaymentMethod enum
+ * @see PaymentMethod.java
  */
-export type PaymentMethod = 'WALLET' | 'CARD' | 'TRANSFER';
+export type PaymentMethod =
+    | 'CARD'
+    | 'KAKAO_PAY'
+    | 'NAVER_PAY'
+    | 'TOSS_PAY'
+    | 'ACCOUNT_TRANSFER'
+    | 'VIRTUAL_ACCOUNT'
+    | 'BANK_TRANSFER'
+    | 'DEPOSIT'
+    | 'POINT';
 
 /**
  * 주문 아이템 타입
- * @see OrderItemType enum
+ * @see OrderItemType.java
  */
-export type OrderItemType = 'FUNDING_PENDING' | 'FUNDING' | 'GENERAL_PRODUCT';
+export type OrderItemType = 'NORMAL_ORDER' | 'FUNDING_GIFT' | 'NORMAL_GIFT';
 
 /**
  * 주문 상태
- * @see OrderStatus enum
+ * @see OrderStatus.java
  */
-export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'FAILED';
+export type OrderStatus =
+    | 'PAYMENT_PENDING'
+    | 'PAID'
+    | 'CONFIRMED'
+    | 'CANCELED'
+    | 'FAILED'
+    | 'PARTIAL_CANCELED'
+    | 'REFUNDED';
 
 /**
  * 주문 아이템 상태
- * @see OrderItemStatus enum
+ * @see OrderItemStatus.java
  */
-export type OrderItemStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED';
+export type OrderItemStatus = 'CREATED' | 'PAID' | 'CANCELLED';
 
 /**
  * Order summary for list views

@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Wallet, AlertCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { InlineError } from '@/components/common/InlineError';
 import { toast } from 'sonner';
 import { useCart } from '@/features/cart/hooks/useCart';
 import { useWallet } from '@/features/wallet/hooks/useWallet';
@@ -23,15 +25,13 @@ import type { CartItem } from '@/types/cart';
  *       Cart 기반 주문 API 추가 필요
  */
 function cartItemToOrderItem(item: CartItem): PlaceOrderItemRequest {
-    // isNewFunding이 true면 FUNDING_PENDING, 아니면 FUNDING
-    const orderItemType: OrderItemType = item.isNewFunding ? 'FUNDING_PENDING' : 'FUNDING';
+    // 카트 아이템은 펀딩 선물 타입
+    const orderItemType: OrderItemType = 'FUNDING_GIFT';
 
-    // wishlistItemId: FUNDING_PENDING은 wishItemId, FUNDING은 fundingId
-    // 백엔드는 wishlistItemId를 기대하지만, FUNDING 타입의 경우 fundingId만 있음
-    // TODO: 백엔드와 협의 필요 - FUNDING 타입에서 wishlistItemId 대신 fundingId 사용 가능 여부
-    const wishlistItemId = item.isNewFunding
+    // TODO: 백엔드와 협의 필요 - Cart 응답에서 wishlistItemId 제공 여부
+    const wishlistItemId = item.funding.wishItemId
         ? parseInt(item.funding.wishItemId, 10)
-        : parseInt(item.fundingId, 10); // FUNDING 타입에서 임시로 fundingId 사용
+        : parseInt(item.fundingId, 10);
 
     // receiverId: Cart 응답에 없음
     // TODO: 백엔드에서 Cart 아이템에 receiverId 포함 필요
@@ -49,8 +49,8 @@ export default function CheckoutPage() {
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const { data: cart, isLoading: isCartLoading } = useCart();
-    const { data: wallet, isLoading: isWalletLoading } = useWallet();
+    const { data: cart, isLoading: isCartLoading, isError: isCartError, refetch: refetchCart } = useCart();
+    const { data: wallet, isLoading: isWalletLoading, isError: isWalletError, refetch: refetchWallet } = useWallet();
     const placeOrder = usePlaceOrder();
 
     const selectedItems = useMemo(() => {
@@ -88,7 +88,7 @@ export default function CheckoutPage() {
 
             const result = await placeOrder.mutateAsync({
                 items: orderItems,
-                method: 'WALLET',
+                method: 'DEPOSIT',
             });
 
             toast.success('결제가 완료되었습니다!');
@@ -121,9 +121,67 @@ export default function CheckoutPage() {
                 hasBack={true}
                 showBottomNav={false}
             >
-                <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className="p-4 space-y-6 max-w-lg mx-auto">
+                    {/* 주문상품 skeleton */}
+                    <div className="space-y-4">
+                        <Skeleton className="h-5 w-28" />
+                        <div className="border border-border rounded-lg p-4 space-y-3">
+                            <Skeleton className="h-5 w-40" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                        </div>
+                    </div>
+                    {/* 결제정보 skeleton */}
+                    <div className="space-y-4">
+                        <Skeleton className="h-5 w-20" />
+                        <div className="border border-border rounded-lg p-4 space-y-3">
+                            <div className="flex justify-between">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-4 w-12" />
+                            </div>
+                            <Skeleton className="h-px w-full" />
+                            <div className="flex justify-between">
+                                <Skeleton className="h-6 w-28" />
+                                <Skeleton className="h-6 w-24" />
+                            </div>
+                        </div>
+                    </div>
+                    {/* 결제수단 skeleton */}
+                    <div className="space-y-4">
+                        <Skeleton className="h-5 w-20" />
+                        <div className="border border-border rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Skeleton className="h-5 w-5" />
+                                    <Skeleton className="h-5 w-24" />
+                                </div>
+                                <div className="text-right space-y-1">
+                                    <Skeleton className="h-3 w-8 ml-auto" />
+                                    <Skeleton className="h-6 w-20 ml-auto" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </AppShell>
+        );
+    }
+
+    if (isCartError || isWalletError) {
+        return (
+            <AppShell
+                headerTitle="주문/결제"
+                headerVariant="detail"
+                hasBack={true}
+                showBottomNav={false}
+            >
+                <InlineError
+                    message="주문 정보를 불러오는데 실패했습니다."
+                    onRetry={() => {
+                        if (isCartError) refetchCart();
+                        if (isWalletError) refetchWallet();
+                    }}
+                />
             </AppShell>
         );
     }
@@ -223,7 +281,7 @@ export default function CheckoutPage() {
                 </section>
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border z-20 md:static md:border-t-0">
+            <div className="fixed bottom-0 left-0 right-0 p-4 pb-safe bg-background border-t border-border z-20 md:static md:border-t-0 md:pb-4">
                 <Button
                     className="w-full h-12 text-lg font-bold"
                     onClick={handlePayment}

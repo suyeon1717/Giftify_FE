@@ -67,7 +67,7 @@ interface BackendGetOrderDetailResponse {
  * 백엔드 GetOrdersResponse
  */
 interface BackendGetOrdersResponse {
-  content: BackendOrderSummary[];
+  orders: BackendOrderSummary[];
   page: number;
   size: number;
   totalElements: number;
@@ -81,15 +81,6 @@ interface BackendGetOrdersResponse {
  */
 interface BackendPlaceOrderResult {
   orderId: number;
-}
-
-/**
- * 백엔드 RsData wrapper
- */
-interface RsData<T> {
-  resultCode: string;
-  msg: string;
-  data: T;
 }
 
 // --- Mapping Functions ---
@@ -136,13 +127,13 @@ export async function placeOrder(
   request: PlaceOrderRequest,
   idempotencyKey?: string
 ): Promise<PlaceOrderResult> {
-  const response = await apiClient.post<RsData<BackendPlaceOrderResult>>(
+  const response = await apiClient.post<BackendPlaceOrderResult>(
     '/api/v2/orders',
     request,
     { idempotencyKey }
   );
   return {
-    orderId: response.data.orderId.toString(),
+    orderId: response.orderId.toString(),
   };
 }
 
@@ -151,10 +142,10 @@ export async function placeOrder(
  * @endpoint GET /api/v2/orders/{orderId}
  */
 export async function getOrder(orderId: string): Promise<OrderDetail> {
-  const response = await apiClient.get<RsData<BackendGetOrderDetailResponse>>(
+  const response = await apiClient.get<BackendGetOrderDetailResponse>(
     `/api/v2/orders/${orderId}`
   );
-  return mapBackendOrderDetail(response.data.orderDetail);
+  return mapBackendOrderDetail(response.orderDetail);
 }
 
 /**
@@ -169,19 +160,18 @@ export async function getOrders(params?: PageParams): Promise<OrderListResponse>
   const queryString = queryParams.toString();
   const endpoint = queryString ? `/api/v2/orders?${queryString}` : '/api/v2/orders';
 
-  const response = await apiClient.get<RsData<BackendGetOrdersResponse>>(endpoint);
-  const data = response.data;
+  const response = await apiClient.get<BackendGetOrdersResponse>(endpoint);
 
   return {
-    content: data.content.map(mapBackendOrder),
-    items: data.content.map(mapBackendOrder),
+    content: response.orders.map(mapBackendOrder),
+    items: response.orders.map(mapBackendOrder),
     page: {
-      page: data.page,
-      size: data.size,
-      totalElements: data.totalElements,
-      totalPages: data.totalPages,
-      hasNext: data.hasNext,
-      hasPrevious: data.hasPrevious,
+      page: response.page,
+      size: response.size,
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+      hasNext: response.hasNext,
+      hasPrevious: response.hasPrevious,
     },
   };
 }
