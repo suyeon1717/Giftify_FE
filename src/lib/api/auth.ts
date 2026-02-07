@@ -10,25 +10,4 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
 }
 
 // getMe is exported from ./members module
-
-/**
- * Synchronize Auth0 session with Backend
- * Calls the Next.js API route which forwards the ID Token to the backend.
- */
-// Calls the Next.js API route (BFF) which forwards the ID Token to the backend.
-export async function sync(): Promise<LoginResponse> {
-  const response = await fetch('/api/auth/sync', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.error('[sync] Error response:', response.status, errorData);
-    throw new Error(errorData.message || `Failed to sync session (${response.status})`);
-  }
-
-  return response.json();
-}
+// sync function removed - now handled by onCallback in auth0.ts
