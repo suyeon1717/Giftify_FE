@@ -27,22 +27,3 @@ export function usePlaceOrder() {
     },
   });
 }
-
-/**
- * @deprecated Use usePlaceOrder instead
- */
-export function useCreateOrder() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (_data?: { cartItemIds?: string[] }) => {
-      throw new Error(
-        'useCreateOrder is deprecated. Use usePlaceOrder with items[] and method instead.'
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders });
-      queryClient.invalidateQueries({ queryKey: queryKeys.cart });
-    },
-  });
-}

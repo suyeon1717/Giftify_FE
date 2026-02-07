@@ -183,14 +183,26 @@ export const handlers = [
     const paginated = filtered.slice(start, end);
 
     return HttpResponse.json({
-      content: paginated,
-      page: {
-        page,
-        size,
+      result: 'SUCCESS',
+      data: {
+        content: paginated,
+        pageable: {
+          pageNumber: page,
+          pageSize: size,
+          sort: { empty: true, sorted: false, unsorted: true },
+          offset: page * size,
+          paged: true,
+          unpaged: false,
+        },
         totalElements: filtered.length,
         totalPages: Math.ceil(filtered.length / size),
-        hasNext: end < filtered.length,
-        hasPrevious: page > 0,
+        last: end >= filtered.length,
+        size,
+        number: page,
+        sort: { empty: true, sorted: false, unsorted: true },
+        numberOfElements: paginated.length,
+        first: page === 0,
+        empty: paginated.length === 0,
       },
     });
   }),

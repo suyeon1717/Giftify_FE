@@ -10,6 +10,7 @@ import { ChargeModal } from '@/features/wallet/components/ChargeModal';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useWallet } from '@/features/wallet/hooks/useWallet';
+import { InlineError } from '@/components/common/InlineError';
 import { Loader2, ChevronRight, Wallet, LogOut, MessageCircle } from 'lucide-react';
 import { formatPrice } from '@/lib/format';
 
@@ -55,7 +56,7 @@ const ABOUT_MENU = [
 export default function ProfilePage() {
     const router = useRouter();
     const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-    const { data: member, isLoading: isProfileLoading, error } = useProfile();
+    const { data: member, isLoading: isProfileLoading, error, refetch } = useProfile();
     const { data: wallet } = useWallet();
     const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
     const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
@@ -82,9 +83,10 @@ export default function ProfilePage() {
         return (
             <AppShell headerVariant="main">
                 <div className="p-8">
-                    <div className="text-center text-muted-foreground">
-                        프로필 정보를 불러오는데 실패했습니다.
-                    </div>
+                    <InlineError
+                        message="프로필 정보를 불러오는데 실패했습니다."
+                        onRetry={() => refetch()}
+                    />
                 </div>
             </AppShell>
         );
