@@ -1,6 +1,6 @@
 # 프로젝트 백로그
 
-> 최종 수정: 2026-02-07
+> 최종 수정: 2026-02-07 (2차 업데이트)
 > 분류 기준: 프론트엔드 관점, 우선순위(P0~P2) + 백엔드 의존성 명시
 
 ---
@@ -11,29 +11,6 @@
 
 MSW 목 데이터 기반에서 실제 백엔드 API로 전환하는 작업입니다.
 현재 13개 Phase 구현이 완료되어 페이지/컴포넌트는 존재하나, 대부분 MSW 기반으로 동작 중입니다.
-
-#### A1. ~~상품 상세 조회 API 404 문제 해결~~ (해결됨)
-
-- **상태**: 해결 (2026-02-07 확인, API 정상 동작)
-- **설명**: `/api/v2/products/{id}` 호출 시 404 반환 문제
-- **백엔드 API**: `GET /api/v2/products/{id}` (스펙 확인됨, `RsDataProductDto` 응답)
-- **프론트 파일**: `src/app/products/[id]/page.tsx`, `src/features/product/api/`
-- **확인 사항**:
-  - 백엔드에 해당 상품 ID가 실제로 존재하는지 확인
-  - 프론트 API 클라이언트의 엔드포인트 경로가 `/api/v2/products/{id}`와 일치하는지 확인
-  - `RsDataProductDto` 래퍼 응답 (`{ result, data, message, errorCode }`) 파싱 처리
-
-#### A2. 장바구니 API 엔드포인트 정렬
-
-- **상태**: 해결 (2026-02-07, 프론트 버그 수정 완료)
-- **설명**: 프론트의 장바구니 API 경로와 백엔드 실제 경로 불일치 가능성
-- **백엔드 API**: `GET /api/v2/carts`, `POST /api/v2/carts` (인증 토큰으로 사용자 식별)
-- **프론트 파일**: `src/lib/api/cart.ts`, `src/features/cart/hooks/`
-- **해결 내용**:
-  - 엔드포인트 경로 확인: `/api/v2/carts` (user-centric) 정상
-  - RsData 이중 언래핑 버그 수정 (`client.ts` 자동 언래핑과 충돌)
-  - `toggleCartItemSelection` → 로컬 캐시 전용으로 전환 (서버 refetch 시 리셋 방지)
-- **백엔드 요청 필요** → A2-1 참조
 
 #### A2-1. 장바구니 CRUD API 추가 요청 (백엔드)
 
@@ -55,20 +32,6 @@ MSW 목 데이터 기반에서 실제 백엔드 API로 전환하는 작업입니
   - `POST /api/fundings` (생성)는 스펙에서 미확인 -> **백엔드팀 확인 필요**
 - **프론트 파일**: `src/features/funding/api/`, 펀딩 생성 모달 컴포넌트
 - **선행 조건**: 백엔드에서 펀딩 생성 API 제공 필요
-
-#### A4. 주문(Order) API 연동
-
-- **상태**: 미착수
-- **설명**: 결제 플로우에서 주문 생성/조회 연동
-- **백엔드 API**:
-  - `POST /api/v2/orders` - 주문 생성 (`PlaceOrderRequest` -> `RsDataPlaceOrderResult`)
-  - `GET /api/v2/orders` - 주문 목록 조회 (페이징, `RsDataGetOrdersResponse`)
-  - `GET /api/v2/orders/{orderId}` - 주문 상세 조회 (`RsDataGetOrderDetailResponse`)
-- **프론트 파일**: `src/features/order/`, `src/app/checkout/`
-- **주요 타입**:
-  - `PlaceOrderItemRequest`: `wishlistItemId`, `receiverId`, `amount(Money)`, `orderItemType`
-  - `orderItemType`: `NORMAL_ORDER` | `FUNDING_GIFT` | `NORMAL_GIFT`
-  - `method`: `DEPOSIT` (예치금 결제) 외 카드/간편결제 등
 
 #### A5. 결제(Payment) - Toss PG SDK 연동
 
@@ -99,25 +62,51 @@ MSW 목 데이터 기반에서 실제 백엔드 API로 전환하는 작업입니
 
 ---
 
-### P1: UI/UX 개선 (Medium Priority)
+### P1: 코드 품질 (프론트 자체 해결 가능)
 
-#### B1. 모바일 반응형 최적화
+#### F4. 남은 `as any` 타입 캐스팅 제거 (4건)
 
-- **설명**: 와이어프레임 기준 해상도 390x844 (iPhone 14 Pro) 기반 최적화
-- **참조**: `docs/02-wireframes.md` 디자인 시스템 개요
-- **범위**: 전체 페이지 모바일 퍼스트 검토, BottomNav 터치 영역, 카드 컴포넌트 레이아웃
+- **상태**: 미착수
+- **파일 및 위치**:
+  - `src/features/wishlist/hooks/useWishlistItem.ts:18,21` - queryClient 캐시 데이터에 `as any` 사용
+  - `src/features/home/hooks/useHomeData.ts:39` - `sort: 'price,desc' as any`
+  - `src/features/home/hooks/useHomeData.ts:72` - `member: user as any`
+- **해결 방향**: 캐시 데이터에 적절한 제네릭 타입 지정, sort/member 타입 정의 추가
 
-#### B2. Skeleton UI 로딩 상태 개선
+#### F5. 테스트 파일 TypeScript 에러 수정 (8건)
 
-- **설명**: 현재 홈 페이지만 Skeleton 구현, 나머지 주요 페이지에도 적용 필요
-- **대상 페이지**: 상품 상세, 펀딩 상세, 장바구니, 지갑, 위시리스트
-- **참조**: `docs/02-wireframes.md` 3.4절 상태별 UI
+- **상태**: 미착수
+- **파일 및 위치**:
+  - `src/features/payment/components/__tests__/CheckoutPage.test.tsx:41` - Wallet 타입에 `id` 속성 없음 (`walletId` 사용해야 함)
+  - `src/features/wallet/components/__tests__/WalletPage.test.tsx:42` - 동일 Wallet 타입 문제
+  - `src/features/wallet/hooks/__tests__/useTossPayments.test.ts` - Vitest 글로벌 타입 누락 (`vi`, `describe`, `it`, `expect`)
+  - `src/lib/api/__tests__/payment.test.ts` - `orderId` 누락, 잘못된 `idempotencyKey` 속성
+- **원인**: Wallet 타입 정의 변경 후 테스트 미동기화, tsconfig 테스트 설정 누락
+- **주의**: `src/features/payment/` 내 테스트는 수정 금지 영역 확인 필요
 
-#### B3. 에러 상태 처리 개선
+#### F6. 디버그용 console.log 정리
 
-- **설명**: 페이지별 세부 에러 핸들링 (네트워크 오류, 404, 권한 없음 등)
-- **현재 상태**: 글로벌 `error.tsx`, `not-found.tsx` 존재
-- **개선 방향**: 각 페이지별 인라인 에러 UI, 재시도 버튼, 에러 코드별 안내 메시지
+- **상태**: 미착수
+- **제거 대상** (debug용):
+  - `src/app/auth/complete-signup/page.tsx:170` - `console.log('Member already exists...')`
+  - `src/app/fundings/[id]/page.tsx:165` - `console.log('Participation Success')`
+- **유지 대상** (에러 로깅, 정상):
+  - `console.error(...)` 호출들은 프로덕션 에러 추적용으로 유지
+
+#### F7. 결제 페이지 TODO 해결 (백엔드 협의 필요)
+
+- **상태**: 백엔드 협의 필요
+- **파일**: `src/app/checkout/page.tsx`
+- **이슈**:
+  - `:31-32` - Cart 응답에서 `wishlistItemId` 제공 여부 백엔드 협의 필요
+  - `:37-38` - Cart 아이템에 `receiverId` 포함 필요 (현재 임시값 `0`)
+- **영향**: 주문 생성 시 정확한 `wishlistItemId`와 `receiverId`가 없으면 결제 플로우 불완전
+
+#### F8. deprecated `updateMember()` 함수 정리
+
+- **상태**: 미착수
+- **파일**: `src/lib/api/members.ts`
+- **설명**: `updateMember()`가 `@deprecated` 표시됨, `updateMe()`로 대체 완료 여부 확인 후 삭제
 
 ---
 
@@ -176,6 +165,25 @@ MSW 목 데이터 기반에서 실제 백엔드 API로 전환하는 작업입니
 ---
 
 ## 완료 (Done)
+
+### 2026-02-07 (2차)
+
+- [x] F1: `as any` 타입 캐스팅 제거 (FundingCard, UserHome, explore)
+- [x] F2: explore 페이지 recipient 수동 재구성 제거
+- [x] F3: 페이지네이션 매핑 유틸 통합 (`pagination.ts`)
+- [x] Q1: RedirectToProfile `setTimeout` 제거, 직접 `router.replace`
+- [x] Q2: 프로필 페이지 InlineError 에러 상태 추가
+- [x] Q3: Mock 핸들러 지갑 거래내역 응답 형식 동기화
+- [x] Q4: 레거시 `createOrder` / `useCreateOrder` 삭제
+
+### 2026-02-07 (1차)
+
+- [x] A1: 상품 상세 조회 API 404 해결
+- [x] A2: 장바구니 API 엔드포인트 정렬 및 RsData 이중 언래핑 수정
+- [x] A4: 주문 API 타입 백엔드 스펙 정렬 (4개 enum, RsData 수정, 필드명 변경)
+- [x] B1: 장바구니/지갑 모바일 반응형 최적화
+- [x] B2: 장바구니/지갑 Skeleton UI 로딩 상태 개선
+- [x] B3: 장바구니/결제 페이지 InlineError 에러 상태 추가
 
 ### 2026-02-03
 
