@@ -6,7 +6,6 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Footer } from '@/components/layout/Footer';
 import { WelcomeSection } from '@/features/home/components/WelcomeSection';
 import { MyFundingsSection } from '@/features/home/components/MyFundingsSection';
-import { TrendingFundingsSection } from '@/features/home/components/TrendingFundingsSection';
 import { PopularProductsSection } from '@/features/home/components/PopularProductsSection';
 import { HomePageSkeleton } from '@/features/home/components/HomePageSkeleton';
 import { Separator } from '@/components/ui/separator';
@@ -80,35 +79,26 @@ export function HomePageClient() {
 
                 {/* My Active Fundings */}
                 {/* Content switching based on Auth status */}
-                {isGuest ? (
+                {!isGuest && (
                     <>
-                        {/* Guest: MD's Pick (Recommended) */}
-                        <PopularProductsSection 
-                            products={data.recommendedProducts || []} 
-                            title="MD's Pick" 
-                            subtitle="Recommendation" 
-                        />
-                        
-                        <Separator className="h-2 bg-secondary/30" />
-
-                        {/* Guest: Hot Products (Trending) */}
-                        <PopularProductsSection 
-                            products={data.hotProducts || []} 
-                            title="인기 급상승" 
-                            subtitle="Trending" 
-                        />
-                    </>
-                ) : (
-                    <>
-                        {/* Member: My Active Fundings */}
                         <MyFundingsSection fundings={data.myFundings} />
-
                         <Separator className="h-2 bg-secondary/30" />
-
-                        {/* Member: Trending Fundings */}
-                        <TrendingFundingsSection fundings={data.trendingFundings} />
                     </>
                 )}
+
+                <PopularProductsSection
+                    products={data.recommendedProducts || []}
+                    title="MD's Pick"
+                    subtitle="Recommendation"
+                />
+
+                <Separator className="h-2 bg-secondary/30" />
+
+                <PopularProductsSection
+                    products={data.hotProducts || []}
+                    title="인기 급상승"
+                    subtitle="Trending"
+                />
 
                 <Separator className="h-2 bg-secondary/30" />
 
