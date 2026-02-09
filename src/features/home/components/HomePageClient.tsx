@@ -10,9 +10,7 @@ import { PopularProductsSection } from '@/features/home/components/PopularProduc
 import { HomePageSkeleton } from '@/features/home/components/HomePageSkeleton';
 import { Separator } from '@/components/ui/separator';
 import { useHomeData } from '@/features/home/hooks/useHomeData';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { InlineError } from '@/components/common/InlineError';
 
 export function HomePageClient() {
     const { data, isLoading, isError, error, refetch } = useHomeData();
@@ -36,25 +34,11 @@ export function HomePageClient() {
                 showHeader={true}
                 showBottomNav={false}
             >
-                <div className="flex items-center justify-center min-h-[60vh] px-4">
-                    <Alert variant="destructive" className="max-w-md">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>데이터를 불러올 수 없습니다</AlertTitle>
-                        <AlertDescription className="mt-2 space-y-2">
-                            <p className="text-sm">
-                                {error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}
-                            </p>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => refetch()}
-                                className="mt-2"
-                            >
-                                다시 시도
-                            </Button>
-                        </AlertDescription>
-                    </Alert>
-                </div>
+                <InlineError
+                    error={error}
+                    onRetry={() => refetch()}
+                    fullPage
+                />
             </AppShell>
         );
     }

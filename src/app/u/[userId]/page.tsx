@@ -51,7 +51,8 @@ export function UserHomeContent({ userId }: { userId: string }) {
             <AppShell headerVariant="main">
                 <div className="flex flex-col items-center justify-center h-96">
                     <InlineError
-                        message={profileError instanceof Error ? `사용자 정보를 불러올 수 없습니다. ${profileError.message}` : '사용자 정보를 찾을 수 없습니다.'}
+                        message="사용자 정보를 불러올 수 없습니다."
+                        error={profileError}
                         onRetry={() => refetchProfile()}
                     />
                 </div>

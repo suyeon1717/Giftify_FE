@@ -19,7 +19,7 @@ import { formatPrice } from '@/lib/format';
 
 export default function CartPage() {
     const router = useRouter();
-    const { data: cart, isLoading, isError, refetch } = useCart();
+    const { data: cart, isLoading, isError, error, refetch } = useCart();
     const updateCartItem = useUpdateCartItem();
     const removeCartItem = useRemoveCartItem();
     const toggleSelection = useToggleCartSelection();
@@ -159,6 +159,7 @@ export default function CartPage() {
                     <h1 className="text-xl lg:text-2xl font-medium tracking-tight mb-8">장바구니</h1>
                     <InlineError
                         message="장바구니를 불러오는데 실패했습니다."
+                        error={error}
                         onRetry={() => refetch()}
                     />
                 </div>

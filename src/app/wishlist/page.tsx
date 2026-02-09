@@ -149,7 +149,8 @@ export default function MyWishlistPage() {
             <AppShell headerVariant="main">
                 <div className="flex flex-col items-center justify-center min-h-[50vh] p-4">
                     <InlineError
-                        message={error instanceof Error ? `위시리스트를 불러올 수 없습니다. ${error.message}` : '위시리스트를 불러올 수 없습니다.'}
+                        message="위시리스트를 불러올 수 없습니다."
+                        error={error}
                         onRetry={() => refetch()}
                     />
                 </div>

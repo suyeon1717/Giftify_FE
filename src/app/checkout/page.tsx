@@ -50,8 +50,8 @@ export default function CheckoutPage() {
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const { data: cart, isLoading: isCartLoading, isError: isCartError, refetch: refetchCart } = useCart();
-    const { data: wallet, isLoading: isWalletLoading, isError: isWalletError, refetch: refetchWallet } = useWallet();
+    const { data: cart, isLoading: isCartLoading, isError: isCartError, error: cartError, refetch: refetchCart } = useCart();
+    const { data: wallet, isLoading: isWalletLoading, isError: isWalletError, error: walletError, refetch: refetchWallet } = useWallet();
     const placeOrder = usePlaceOrder();
 
     const selectedItems = useMemo(() => {
@@ -178,6 +178,7 @@ export default function CheckoutPage() {
             >
                 <InlineError
                     message="주문 정보를 불러오는데 실패했습니다."
+                    error={cartError || walletError}
                     onRetry={() => {
                         if (isCartError) refetchCart();
                         if (isWalletError) refetchWallet();

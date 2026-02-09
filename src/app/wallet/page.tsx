@@ -92,6 +92,7 @@ export default function WalletPage() {
                 <div className="max-w-screen-2xl mx-auto px-4 md:px-8 py-6 md:py-10">
                     <InlineError
                         message="지갑 정보를 불러오는데 실패했습니다."
+                        error={walletError || historyError}
                         onRetry={handleRefresh}
                     />
                 </div>

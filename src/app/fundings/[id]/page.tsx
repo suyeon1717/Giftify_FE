@@ -62,7 +62,8 @@ export default function FundingDetailPage() {
             >
                 <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] p-4">
                     <InlineError
-                        message={error instanceof Error ? `펀딩 정보를 불러올 수 없습니다. ${error.message}` : '펀딩 정보를 불러올 수 없습니다.'}
+                        message="펀딩 정보를 불러올 수 없습니다."
+                        error={error}
                         onRetry={() => refetch()}
                     />
                 </div>
