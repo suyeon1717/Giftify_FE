@@ -196,7 +196,7 @@ export default function CheckoutPage() {
                 showBottomNav={false}
             >
                 <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] gap-4 p-4">
-                    <AlertCircle className="h-12 w-12 text-muted-foreground" />
+                    <AlertCircle className="h-12 w-12 text-muted-foreground" strokeWidth={1} />
                     <div className="text-center">
                         <h3 className="text-lg font-semibold mb-1">주문할 상품이 없습니다</h3>
                         <p className="text-sm text-muted-foreground">
@@ -259,7 +259,7 @@ export default function CheckoutPage() {
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Wallet className="h-5 w-5 text-primary" />
+                                    <Wallet className="h-5 w-5 text-primary" strokeWidth={1.5} />
                                     <span className="font-medium">Giftify 지갑</span>
                                 </div>
                                 <div className="text-right">
@@ -271,7 +271,7 @@ export default function CheckoutPage() {
                             </div>
                             {hasInsufficientBalance && (
                                 <Alert variant="destructive" className="mt-4">
-                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertCircle className="h-4 w-4" strokeWidth={1.5} />
                                     <AlertDescription className="flex items-center justify-between">
                                         <span>잔액이 부족합니다. 지갑을 충전해주세요.</span>
                                         <Link href="/wallet/charge" className="ml-3 shrink-0 text-sm font-semibold underline underline-offset-2">
@@ -291,7 +291,7 @@ export default function CheckoutPage() {
                     onClick={handlePayment}
                     disabled={isProcessing || hasInsufficientBalance}
                 >
-                    {isProcessing && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                    {isProcessing && <Loader2 className="mr-2 h-5 w-5 animate-spin" strokeWidth={1.5} />}
                     {totalAmount.toLocaleString()}원 결제하기
                 </Button>
             </div>

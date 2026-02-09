@@ -32,7 +32,7 @@ function CheckoutCompleteContent() {
                 showBottomNav={false}
             >
                 <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
                 </div>
             </AppShell>
         );
@@ -71,7 +71,7 @@ function CheckoutCompleteContent() {
             <div className="p-4 space-y-6 pb-24 max-w-lg mx-auto">
                 <div className="flex flex-col items-center justify-center gap-4 py-8">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                        <CheckCircle className="h-10 w-10 text-primary" />
+                        <CheckCircle className="h-10 w-10 text-primary" strokeWidth={1} />
                     </div>
                     <div className="text-center space-y-1">
                         <h2 className="text-2xl font-bold">결제가 완료되었습니다!</h2>
@@ -154,7 +154,7 @@ export default function CheckoutCompletePage() {
                 showBottomNav={false}
             >
                 <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" strokeWidth={1.5} />
                 </div>
             </AppShell>
         }>

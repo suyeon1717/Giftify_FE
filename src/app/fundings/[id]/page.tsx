@@ -13,6 +13,7 @@ import { RecipientActionButtons } from '@/features/funding/components/RecipientA
 import { ParticipantsModal } from '@/features/funding/components/ParticipantsModal';
 import { Separator } from '@/components/ui/separator';
 import { useFunding } from '@/features/funding/hooks/useFunding';
+import { InlineError } from '@/components/common/InlineError';
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 
@@ -23,7 +24,7 @@ export default function FundingDetailPage() {
     const [participateModalOpen, setParticipateModalOpen] = useState(false);
     const [participantsModalOpen, setParticipantsModalOpen] = useState(false);
 
-    const { data: funding, isLoading, isError, error } = useFunding(id);
+    const { data: funding, isLoading, isError, error, refetch } = useFunding(id);
 
     if (isLoading) {
         return (
@@ -60,10 +61,10 @@ export default function FundingDetailPage() {
                 showBottomNav={false}
             >
                 <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] p-4">
-                    <p className="text-destructive">펀딩 정보를 불러올 수 없습니다.</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                        {error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}
-                    </p>
+                    <InlineError
+                        message={error instanceof Error ? `펀딩 정보를 불러올 수 없습니다. ${error.message}` : '펀딩 정보를 불러올 수 없습니다.'}
+                        onRetry={() => refetch()}
+                    />
                 </div>
             </AppShell>
         );
@@ -119,7 +120,7 @@ export default function FundingDetailPage() {
                                     size="sm"
                                     onClick={() => setParticipantsModalOpen(true)}
                                 >
-                                    <Users className="h-4 w-4 mr-1" />
+                                    <Users className="h-4 w-4 mr-1" strokeWidth={1.5} />
                                     전체보기
                                 </Button>
                             )}

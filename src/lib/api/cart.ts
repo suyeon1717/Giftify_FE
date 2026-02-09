@@ -92,6 +92,15 @@ function mapBackendCartItem(item: BackendCartItemResponse, cartId: number, index
   };
 }
 
+// --- Helpers ---
+
+function parseCartItemId(itemId: string): { targetType: BackendTargetType; targetId: number } {
+  const parts = itemId.split('-');
+  const targetId = parseInt(parts[parts.length - 1], 10);
+  const targetType = parts.slice(1, -1).join('-') as BackendTargetType;
+  return { targetType, targetId };
+}
+
 // --- API Functions ---
 
 /**
@@ -143,25 +152,28 @@ export async function addCartItem(data: CartItemCreateRequest): Promise<void> {
 }
 
 /**
- * 장바구니 아이템 수정
- * @note 백엔드에 해당 API 없음 - 삭제 후 재추가로 처리 필요
- * @todo 백엔드에 PATCH /api/v2/carts/{cartId}/items/{itemId} 추가 요청
+ * 장바구니 아이템 수정 (참여 금액)
+ * @endpoint PATCH /api/v2/carts/items
  */
-export async function updateCartItem(_itemId: string, _data: CartItemUpdateRequest): Promise<CartItem> {
-  throw new Error(
-    '장바구니 아이템 수정 API가 백엔드에 없습니다. 삭제 후 재추가로 처리해주세요.'
-  );
+export async function updateCartItem(itemId: string, data: CartItemUpdateRequest): Promise<void> {
+  const { targetType, targetId } = parseCartItemId(itemId);
+
+  const request: BackendCartItemRequest = {
+    targetType,
+    targetId,
+    amount: data.amount!,
+  };
+
+  await apiClient.patch<void>('/api/v2/carts/items', request);
 }
 
 /**
  * 장바구니 아이템 삭제
- * @note 백엔드에 해당 API 없음
- * @todo 백엔드에 DELETE /api/v2/carts/{cartId}/items/{itemId} 추가 요청
+ * @endpoint DELETE /api/v2/carts/items/{targetType}/{targetId}
  */
-export async function removeCartItem(_itemId: string): Promise<void> {
-  throw new Error(
-    '장바구니 아이템 삭제 API가 백엔드에 없습니다.'
-  );
+export async function removeCartItem(itemId: string): Promise<void> {
+  const { targetType, targetId } = parseCartItemId(itemId);
+  await apiClient.delete<void>(`/api/v2/carts/items/${targetType}/${targetId}`);
 }
 
 /**

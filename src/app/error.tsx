@@ -21,7 +21,7 @@ export default function Error({ error, reset }: ErrorProps) {
             <div className="text-center space-y-6 max-w-md">
                 <div className="flex justify-center">
                     <div className="rounded-full bg-destructive/10 p-4">
-                        <AlertTriangle className="h-12 w-12 text-destructive" />
+                        <AlertTriangle className="h-12 w-12 text-destructive" strokeWidth={1} />
                     </div>
                 </div>
 
@@ -54,12 +54,12 @@ export default function Error({ error, reset }: ErrorProps) {
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Button onClick={reset} className="gap-2">
-                        <RefreshCcw className="h-4 w-4" />
+                        <RefreshCcw className="h-4 w-4" strokeWidth={1.5} />
                         다시 시도
                     </Button>
                     <Button variant="outline" asChild className="gap-2">
                         <Link href="/">
-                            <Home className="h-4 w-4" />
+                            <Home className="h-4 w-4" strokeWidth={1.5} />
                             홈으로
                         </Link>
                     </Button>

@@ -104,11 +104,11 @@ export default function FundingsPage() {
                         {/* Search & Layout Toggle (Visual only for now) */}
                         <div className="flex items-center gap-3">
                             <Button variant="outline" size="sm" className="h-9 px-3 border-black rounded-none font-bold text-xs">
-                                <Filter className="w-3.5 h-3.5 mr-2" />
+                                <Filter className="w-3.5 h-3.5 mr-2" strokeWidth={1.5} />
                                 필터
                             </Button>
                             <Button variant="ghost" size="icon" className="h-9 w-9">
-                                <Search className="w-4 h-4" />
+                                <Search className="w-4 h-4" strokeWidth={1.5} />
                             </Button>
                         </div>
                     </div>

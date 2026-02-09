@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -144,6 +145,7 @@ export function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
       <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <DialogTitle className="text-xl font-bold">포인트 충전</DialogTitle>
+          <DialogDescription className="sr-only">충전할 금액을 선택하거나 직접 입력하세요</DialogDescription>
         </DialogHeader>
         
         <div className="px-6 py-5 space-y-6">

@@ -138,14 +138,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all"
                     aria-label="이전 이미지"
                   >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="w-5 h-5" strokeWidth={1.5} />
                   </button>
                   <button
                     onClick={() => setCurrentImageIndex(prev => prev === images.length - 1 ? 0 : prev + 1)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all"
                     aria-label="다음 이미지"
                   >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-5 h-5" strokeWidth={1.5} />
                   </button>
                 </>
               )}
@@ -227,14 +227,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   disabled={quantity <= 1}
                   className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="w-4 h-4" strokeWidth={1.5} />
                 </button>
                 <span className="w-8 text-center font-medium tabular-nums">{quantity}</span>
                 <button
                   onClick={() => setQuantity(prev => prev + 1)}
                   className="w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-50"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" strokeWidth={1.5} />
                 </button>
               </div>
             </div>
@@ -255,7 +255,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 onClick={() => toggleWishlist()}
                 disabled={wishlistLoading}
               >
-                <Heart className={cn("w-5 h-5", isInWishlist && "fill-red-500 text-red-500")} />
+                <Heart className={cn("w-5 h-5", isInWishlist && "fill-red-500 text-red-500")} strokeWidth={1.5} />
               </Button>
 
               {/* Share Button */}
@@ -265,7 +265,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 className="w-14 flex-shrink-0"
                 onClick={handleShare}
               >
-                <Share2 className="w-5 h-5" />
+                <Share2 className="w-5 h-5" strokeWidth={1.5} />
               </Button>
 
               {/* Add to Cart Button */}
@@ -276,7 +276,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 onClick={handleAddToCart}
                 disabled={cartLoading}
               >
-                <ShoppingBag className="w-5 h-5 mr-2" />
+                <ShoppingBag className="w-5 h-5 mr-2" strokeWidth={1.5} />
                 장바구니 담기
               </Button>
             </div>

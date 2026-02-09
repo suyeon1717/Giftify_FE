@@ -28,6 +28,7 @@ import {
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -331,12 +332,13 @@ export default function CompleteSignupPage() {
                                                     <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
                                                         <DialogTrigger asChild>
                                                             <Button type="button" variant="outline" size="icon">
-                                                                <Search className="h-4 w-4" />
+                                                                <Search className="h-4 w-4" strokeWidth={1.5} />
                                                             </Button>
                                                         </DialogTrigger>
                                                         <DialogContent className="sm:max-w-md">
                                                             <DialogHeader>
                                                                 <DialogTitle>주소 검색</DialogTitle>
+                                                                <DialogDescription className="sr-only">도로명 또는 지번 주소를 검색하세요</DialogDescription>
                                                             </DialogHeader>
                                                             <div className="mt-4 border rounded-md overflow-hidden">
                                                                 <DaumPostcode

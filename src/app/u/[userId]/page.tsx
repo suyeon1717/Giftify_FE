@@ -10,11 +10,12 @@ import { FundingCard } from '@/components/common/FundingCard';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { useMyOrganizedFundings } from '@/features/funding/hooks/useFunding';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { InlineError } from '@/components/common/InlineError';
 import { Loader2 } from 'lucide-react';
 
 export function UserHomeContent({ userId }: { userId: string }) {
     const { user: auth0User } = useAuth();
-    const { data: profile, isLoading: isProfileLoading } = useProfile();
+    const { data: profile, isLoading: isProfileLoading, isError: isProfileError, error: profileError, refetch: refetchProfile } = useProfile();
     const { data: fundingsResponse, isLoading: isFundingsLoading } = useMyOrganizedFundings();
 
     const user = useMemo(() => {
@@ -45,11 +46,14 @@ export function UserHomeContent({ userId }: { userId: string }) {
         );
     }
 
-    if (!user) {
+    if (isProfileError || !user) {
         return (
             <AppShell headerVariant="main">
-                <div className="flex items-center justify-center h-96">
-                    <p className="text-muted-foreground">사용자 정보를 찾을 수 없습니다.</p>
+                <div className="flex flex-col items-center justify-center h-96">
+                    <InlineError
+                        message={profileError instanceof Error ? `사용자 정보를 불러올 수 없습니다. ${profileError.message}` : '사용자 정보를 찾을 수 없습니다.'}
+                        onRetry={() => refetchProfile()}
+                    />
                 </div>
             </AppShell>
         );

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { usePublicWishlist } from '@/features/wishlist/hooks/useWishlist';
 import { CreateFundingModal } from '@/features/funding/components/CreateFundingModal';
+import { InlineError } from '@/components/common/InlineError';
 import { Gift } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/format';
 
@@ -25,7 +26,7 @@ interface FriendWishlistPageProps {
 export default function FriendWishlistPage({ params }: FriendWishlistPageProps) {
     const { userId } = use(params);
     const router = useRouter();
-    const { data: wishlist, isLoading, error } = usePublicWishlist(userId);
+    const { data: wishlist, isLoading, error, refetch } = usePublicWishlist(userId);
     const [selectedItem, setSelectedItem] = useState<PublicWishlistItem | null>(null);
     const [isStartFundingOpen, setIsStartFundingOpen] = useState(false);
 
@@ -54,11 +55,11 @@ export default function FriendWishlistPage({ params }: FriendWishlistPageProps) 
     if (error) {
         return (
             <AppShell headerTitle="위시리스트" headerVariant="detail" showBottomNav={false}>
-                <div className="flex items-center justify-center min-h-[50vh] p-4">
-                    <div className="text-center space-y-4">
-                        <p className="text-lg font-medium text-destructive">위시리스트를 불러올 수 없습니다</p>
-                        <Button onClick={() => window.location.reload()} variant="outline">새로고침</Button>
-                    </div>
+                <div className="flex flex-col items-center justify-center min-h-[50vh] p-4">
+                    <InlineError
+                        message={error instanceof Error ? `위시리스트를 불러올 수 없습니다. ${error.message}` : '위시리스트를 불러올 수 없습니다.'}
+                        onRetry={() => refetch()}
+                    />
                 </div>
             </AppShell>
         );
@@ -87,7 +88,7 @@ export default function FriendWishlistPage({ params }: FriendWishlistPageProps) 
                     </div>
                     <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
                         <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                            <Gift className="w-12 h-12 text-gray-400" />
+                            <Gift className="w-12 h-12 text-gray-400" strokeWidth={1} />
                         </div>
                         <h2 className="text-xl font-medium mb-2">아직 위시 아이템이 없어요</h2>
                         <p className="text-muted-foreground">친구가 위시리스트에 상품을 추가하면 여기에 표시됩니다</p>
@@ -115,7 +116,7 @@ export default function FriendWishlistPage({ params }: FriendWishlistPageProps) 
 
                 <section className="mb-10">
                     <div className="flex items-center gap-2 mb-4">
-                        <Gift className="w-5 h-5 text-blue-500" />
+                        <Gift className="w-5 h-5 text-blue-500" strokeWidth={1.5} />
                         <h2 className="text-lg font-bold">위시 아이템</h2>
                         <Badge variant="outline" className="ml-2">{wishlist.items.length}</Badge>
                     </div>
@@ -159,7 +160,7 @@ function PublicItemCard({ item, onStartFunding }: { item: PublicWishlistItem; on
     return (
         <Card className="overflow-hidden hover:shadow-lg transition-shadow">
             <div className="relative aspect-square bg-gray-100 flex items-center justify-center">
-                <Gift className="w-16 h-16 text-gray-300" />
+                <Gift className="w-16 h-16 text-gray-300" strokeWidth={1} />
             </div>
             <div className="p-4 space-y-3">
                 <h3 className="font-medium line-clamp-1">{item.productName}</h3>
@@ -172,7 +173,7 @@ function PublicItemCard({ item, onStartFunding }: { item: PublicWishlistItem; on
                     className="w-full border-dashed hover:bg-primary hover:text-primary-foreground"
                     onClick={onStartFunding}
                 >
-                    <Gift className="w-4 h-4 mr-2" />
+                    <Gift className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     펀딩 개설하기
                 </Button>
             </div>

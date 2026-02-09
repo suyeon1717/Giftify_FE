@@ -52,7 +52,7 @@ export default function DiscoverPage() {
                             onChange={(e) => setSearchNickname(e.target.value)}
                             className="h-14 pl-12 pr-24 border-black border-2 rounded-none focus-visible:ring-0 text-sm font-bold"
                         />
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-black" strokeWidth={1.5} />
                         <Button
                             type="submit"
                             className="absolute right-1 top-1 bottom-1 px-6 rounded-none bg-black text-white hover:bg-gray-800"
@@ -66,7 +66,7 @@ export default function DiscoverPage() {
                 {searchedNickname && (
                     <div className="mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex items-center gap-2 mb-6">
-                            <Users className="w-5 h-5" />
+                            <Users className="w-5 h-5" strokeWidth={1.5} />
                             <h2 className="text-lg font-black tracking-tight">"{searchedNickname}" 검색 결과</h2>
                         </div>
 
@@ -107,7 +107,7 @@ export default function DiscoverPage() {
                                             </div>
                                             <Button className="border-2 border-black bg-transparent text-black hover:bg-black hover:text-white rounded-none font-bold py-6 px-10 transition-all">
                                                 보러가기
-                                                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" strokeWidth={1.5} />
                                             </Button>
                                         </div>
                                     </Card>
@@ -122,7 +122,7 @@ export default function DiscoverPage() {
                     <div className="flex items-end justify-between mb-8">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
-                                <Users className="w-4 h-4 text-blue-500" />
+                                <Users className="w-4 h-4 text-blue-500" strokeWidth={1.5} />
                                 <span className="text-[10px] font-black tracking-widest text-blue-500 uppercase">Members</span>
                             </div>
                             <h2 className="text-2xl md:text-3xl font-black tracking-tighter">위시리스트 둘러보기</h2>
@@ -170,7 +170,7 @@ export default function DiscoverPage() {
                                 GO TO WISH
                             </Button>
                         </div>
-                        <Gift className="absolute -right-8 -bottom-8 w-40 h-40 text-gray-800 opacity-50 group-hover:scale-110 transition-transform duration-700" />
+                        <Gift className="absolute -right-8 -bottom-8 w-40 h-40 text-gray-800 opacity-50 group-hover:scale-110 transition-transform duration-700" strokeWidth={1} />
                     </div>
 
                     <div className="p-10 bg-gray-100 group cursor-pointer overflow-hidden relative border-2 border-transparent hover:border-black transition-all">
@@ -184,7 +184,7 @@ export default function DiscoverPage() {
                                 VIEW MY FUNDINGS
                             </Button>
                         </div>
-                        <Users className="absolute -right-8 -bottom-8 w-40 h-40 text-gray-200 group-hover:scale-110 transition-transform duration-700" />
+                        <Users className="absolute -right-8 -bottom-8 w-40 h-40 text-gray-200 group-hover:scale-110 transition-transform duration-700" strokeWidth={1} />
                     </div>
                 </div>
 

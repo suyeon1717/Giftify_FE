@@ -199,7 +199,7 @@ function ProductSearchContent() {
                   <div className="flex items-center gap-2 bg-black text-white px-3 py-1 text-[10px] font-bold">
                     <span>"{searchQuery}"</span>
                     <button onClick={clearSearch}>
-                      <X className="h-3 w-3" />
+                      <X className="h-3 w-3" strokeWidth={1.5} />
                     </button>
                   </div>
                 )}
@@ -229,7 +229,7 @@ function ProductSearchContent() {
             <div ref={loadMoreRef} className="py-20 flex justify-center">
               {isFetchingNextPage ? (
                 <div className="flex items-center gap-2 text-[10px] font-bold">
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />
                   LOADING...
                 </div>
               ) : hasNextPage ? (

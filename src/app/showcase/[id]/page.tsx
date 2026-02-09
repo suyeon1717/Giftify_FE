@@ -98,7 +98,7 @@ export function ShowcaseContent({ id }: { id: string }) {
                         className="rounded-full hover:bg-white/20 text-white transition-colors"
                         onClick={() => router.back()}
                     >
-                        <ArrowLeft className="w-6 h-6" />
+                        <ArrowLeft className="w-6 h-6" strokeWidth={1.5} />
                     </Button>
                 </div>
 

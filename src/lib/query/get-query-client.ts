@@ -10,9 +10,8 @@ function shouldRetry(failureCount: number, error: unknown): boolean {
 
     // Don't retry client errors (4xx) except 408 (timeout) and 429 (rate limit)
     if (error instanceof ApiError) {
-        const status = parseInt(error.code, 10);
-        if (!isNaN(status) && status >= 400 && status < 500) {
-            return status === 408 || status === 429;
+        if (error.status >= 400 && error.status < 500) {
+            return error.status === 408 || error.status === 429;
         }
     }
 

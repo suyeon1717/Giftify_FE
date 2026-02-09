@@ -13,7 +13,7 @@ export default function NotFound() {
             <div className="text-center space-y-6 max-w-md">
                 <div className="flex justify-center">
                     <div className="rounded-full bg-muted p-4">
-                        <FileQuestion className="h-12 w-12 text-muted-foreground" />
+                        <FileQuestion className="h-12 w-12 text-muted-foreground" strokeWidth={1} />
                     </div>
                 </div>
 
@@ -34,7 +34,7 @@ export default function NotFound() {
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Button asChild className="gap-2">
                         <Link href="/">
-                            <Home className="h-4 w-4" />
+                            <Home className="h-4 w-4" strokeWidth={1.5} />
                             홈으로
                         </Link>
                     </Button>
@@ -43,7 +43,7 @@ export default function NotFound() {
                         className="gap-2"
                         onClick={() => router.back()}
                     >
-                        <ArrowLeft className="h-4 w-4" />
+                        <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
                         이전 페이지
                     </Button>
                 </div>

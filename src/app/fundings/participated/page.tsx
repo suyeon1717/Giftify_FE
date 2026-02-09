@@ -6,13 +6,14 @@ import { Footer } from '@/components/layout/Footer';
 import { FundingCard } from '@/components/common/FundingCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { InlineError } from '@/components/common/InlineError';
 import { useMyParticipatedFundings } from '@/features/funding/hooks/useFunding';
 import type { FundingStatus } from '@/types/funding';
 
 export default function ParticipatedFundingsPage() {
     const [status, setStatus] = useState<FundingStatus | undefined>(undefined);
 
-    const { data, isLoading, isError } = useMyParticipatedFundings({ status });
+    const { data, isLoading, isError, refetch } = useMyParticipatedFundings({ status });
 
     return (
         <AppShell
@@ -33,16 +34,16 @@ export default function ParticipatedFundingsPage() {
                     </TabsList>
 
                     <TabsContent value="all" className="mt-4 space-y-4">
-                        <FundingList data={data} isLoading={isLoading} isError={isError} />
+                        <FundingList data={data} isLoading={isLoading} isError={isError} onRetry={() => refetch()} />
                     </TabsContent>
                     <TabsContent value="IN_PROGRESS" className="mt-4 space-y-4">
-                        <FundingList data={data} isLoading={isLoading} isError={isError} />
+                        <FundingList data={data} isLoading={isLoading} isError={isError} onRetry={() => refetch()} />
                     </TabsContent>
                     <TabsContent value="ACHIEVED" className="mt-4 space-y-4">
-                        <FundingList data={data} isLoading={isLoading} isError={isError} />
+                        <FundingList data={data} isLoading={isLoading} isError={isError} onRetry={() => refetch()} />
                     </TabsContent>
                     <TabsContent value="ACCEPTED" className="mt-4 space-y-4">
-                        <FundingList data={data} isLoading={isLoading} isError={isError} />
+                        <FundingList data={data} isLoading={isLoading} isError={isError} onRetry={() => refetch()} />
                     </TabsContent>
                 </Tabs>
 
@@ -52,10 +53,11 @@ export default function ParticipatedFundingsPage() {
     );
 }
 
-function FundingList({ data, isLoading, isError }: {
+function FundingList({ data, isLoading, isError, onRetry }: {
     data: any;
     isLoading: boolean;
     isError: boolean;
+    onRetry: () => void;
 }) {
     if (isLoading) {
         return (
@@ -73,10 +75,11 @@ function FundingList({ data, isLoading, isError }: {
 
     if (isError || !data) {
         return (
-            <div className="py-12 text-center">
-                <p className="text-sm text-muted-foreground">
-                    펀딩 목록을 불러올 수 없습니다.
-                </p>
+            <div className="py-12 flex flex-col items-center">
+                <InlineError
+                    message="펀딩 목록을 불러올 수 없습니다."
+                    onRetry={onRetry}
+                />
             </div>
         );
     }

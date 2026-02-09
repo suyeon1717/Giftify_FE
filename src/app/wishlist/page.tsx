@@ -10,6 +10,7 @@ import { VisibilitySheet } from '@/features/wishlist/components/VisibilitySheet'
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Heart, ExternalLink, ChevronDown } from 'lucide-react';
+import { InlineError } from '@/components/common/InlineError';
 import { useMyWishlist } from '@/features/wishlist/hooks/useWishlist';
 import { useUpdateVisibility, useRemoveWishlistItem } from '@/features/wishlist/hooks/useWishlistMutations';
 import { WishlistVisibility, WishItem } from '@/types/wishlist';
@@ -54,7 +55,7 @@ const PRICE_FILTERS = [
 
 export default function MyWishlistPage() {
     const router = useRouter();
-    const { data: wishlist, isLoading, error } = useMyWishlist();
+    const { data: wishlist, isLoading, error, refetch } = useMyWishlist();
     const updateVisibility = useUpdateVisibility();
     const removeItem = useRemoveWishlistItem();
 
@@ -146,14 +147,11 @@ export default function MyWishlistPage() {
     if (error) {
         return (
             <AppShell headerVariant="main">
-                <div className="flex items-center justify-center min-h-[50vh] p-4">
-                    <div className="text-center space-y-2">
-                        <p className="text-lg font-medium">위시리스트를 불러올 수 없습니다</p>
-                        <p className="text-sm text-muted-foreground">잠시 후 다시 시도해주세요</p>
-                        <Button onClick={() => window.location.reload()} variant="outline" className="mt-4">
-                            새로고침
-                        </Button>
-                    </div>
+                <div className="flex flex-col items-center justify-center min-h-[50vh] p-4">
+                    <InlineError
+                        message={error instanceof Error ? `위시리스트를 불러올 수 없습니다. ${error.message}` : '위시리스트를 불러올 수 없습니다.'}
+                        onRetry={() => refetch()}
+                    />
                 </div>
             </AppShell>
         );

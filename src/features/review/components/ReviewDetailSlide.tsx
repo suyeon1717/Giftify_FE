@@ -4,6 +4,7 @@ import { Star, ThumbsUp } from 'lucide-react';
 import {
     Sheet,
     SheetContent,
+    SheetDescription,
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
@@ -36,6 +37,7 @@ export function ReviewDetailSlide({ review, open, onOpenChange }: ReviewDetailSl
             <SheetContent className="w-full sm:max-w-md p-0 overflow-y-auto">
                 <SheetHeader className="p-4 border-b sr-only">
                     <SheetTitle>Review Detail</SheetTitle>
+                    <SheetDescription>{review.userName}님의 {review.productName} 리뷰</SheetDescription>
                 </SheetHeader>
 
                 {/* Image Section */}
