@@ -40,7 +40,7 @@ describe('ProductCard', () => {
         );
 
         expect(screen.getByText('Test Product')).toBeDefined();
-        expect(screen.getByText('₩10,000')).toBeDefined();
+        expect(screen.getByText(/10,000.*원/)).toBeDefined();
     });
 
     it('triggers prefetch on mouse enter', () => {

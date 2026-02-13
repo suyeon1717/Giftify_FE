@@ -23,6 +23,7 @@ vi.mock('@/components/ui/sheet', () => ({
     SheetContent: ({ children }: any) => <div>{children}</div>,
     SheetHeader: ({ children }: any) => <div>{children}</div>,
     SheetTitle: ({ children }: any) => <div>{children}</div>,
+    SheetDescription: ({ children }: any) => <div>{children}</div>,
 }));
 
 describe('ReviewsPage', () => {
