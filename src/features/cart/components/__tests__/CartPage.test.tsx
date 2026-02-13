@@ -76,7 +76,7 @@ vi.mock('@/features/cart/hooks/useCartMutations', () => ({
         mutate: vi.fn(),
         isPending: false,
     }),
-    useRemoveCartItem: () => ({
+    useRemoveCartItems: () => ({
         mutate: vi.fn(),
         isPending: false,
     }),
