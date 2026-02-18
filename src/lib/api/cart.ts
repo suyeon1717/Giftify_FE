@@ -50,13 +50,13 @@ function mapBackendCart(backend: BackendCartResponse): Cart {
   return {
     id: backend.cartId.toString(),
     memberId: backend.memberId.toString(),
-    items: backend.items.map((item, index) => mapBackendCartItem(item, backend.cartId, index)),
+    items: backend.items.map((item) => mapBackendCartItem(item, backend.cartId)),
     selectedCount: backend.items.length, // 백엔드에서 selected 필드 미제공, 전체 선택으로 간주
     totalAmount: backend.totalAmount,
   };
 }
 
-function mapBackendCartItem(item: BackendCartItemResponse, cartId: number, index: number): CartItem {
+function mapBackendCartItem(item: BackendCartItemResponse, cartId: number): CartItem {
   const isNewFunding = item.targetType === 'FUNDING_PENDING';
 
   return {
