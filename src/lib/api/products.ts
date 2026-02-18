@@ -29,6 +29,8 @@ interface BackendProduct {
   name: string;
   description: string;
   price: number;
+  category: string;
+  imageKey: string;
   createdAt: string;
 }
 
@@ -62,9 +64,9 @@ function mapBackendResponse(response: BackendProductResponse): ProductListRespon
 
 export async function getProducts(params?: ProductsParams): Promise<ProductListResponse> {
   const queryParams = new URLSearchParams();
-  
-  // 백엔드 ProductSearchDto에 맞게 파라미터 매핑
-  if (params?.category) queryParams.append('keyword', params.category);
+
+  // 백엔드 ES 검색 API에 맞게 파라미터 매핑
+  if (params?.category) queryParams.append('category', params.category);
   if (params?.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
   if (params?.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
   if (params?.sort) queryParams.append('sort', params.sort);
@@ -72,8 +74,7 @@ export async function getProducts(params?: ProductsParams): Promise<ProductListR
   if (params?.size !== undefined) queryParams.append('size', params.size.toString());
 
   const queryString = queryParams.toString();
-  // 백엔드 엔드포인트: /api/v2/products/search
-  const endpoint = queryString ? `/api/v2/products/search?${queryString}` : '/api/v2/products/search';
+  const endpoint = queryString ? `/api/v2/products/search/es?${queryString}` : '/api/v2/products/search/es';
 
   const response = await apiClient.get<BackendProductResponse>(endpoint);
   return mapBackendResponse(response);
@@ -82,11 +83,14 @@ export async function getProducts(params?: ProductsParams): Promise<ProductListR
 export async function searchProducts(params: SearchProductsParams): Promise<ProductListResponse> {
   const queryParams = new URLSearchParams();
   queryParams.append('keyword', params.q);
-  if (params.category) queryParams.append('keyword', params.category);
+  if (params.category) queryParams.append('category', params.category);
+  if (params.sort) queryParams.append('sort', params.sort);
+  if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
+  if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
   if (params?.page !== undefined) queryParams.append('page', params.page.toString());
   if (params?.size !== undefined) queryParams.append('size', params.size.toString());
 
-  const response = await apiClient.get<BackendProductResponse>(`/api/v2/products/search?${queryParams.toString()}`);
+  const response = await apiClient.get<BackendProductResponse>(`/api/v2/products/search/es?${queryParams.toString()}`);
   return mapBackendResponse(response);
 }
 
@@ -114,13 +118,13 @@ export async function getProduct(productId: string): Promise<ProductDetail> {
 }
 
 export async function getPopularProducts(limit?: number): Promise<PopularProductsResponse> {
-  // 백엔드에 인기 상품 엔드포인트가 없으므로 일반 검색으로 대체
+  // 백엔드에 인기 상품 엔드포인트가 없으므로 ES 검색으로 대체
   const queryParams = new URLSearchParams();
   if (limit !== undefined) queryParams.append('size', limit.toString());
-  queryParams.append('sort', 'createdAt,desc'); // 최신순으로 대체
+  queryParams.append('sort', 'LATEST');
 
   const queryString = queryParams.toString();
-  const endpoint = queryString ? `/api/v2/products/search?${queryString}` : '/api/v2/products/search';
+  const endpoint = `/api/v2/products/search/es?${queryString}`;
 
   const response = await apiClient.get<BackendProductResponse>(endpoint);
   return {

@@ -12,7 +12,7 @@ export type ProductStatus = 'PENDING' | 'ON_SALE' | 'REJECTED' | 'DISCONTINUED';
 /**
  * Product sort options
  */
-export type ProductSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+export type ProductSort = 'RELEVANCE' | 'LATEST' | 'PRICE_ASC' | 'PRICE_DESC';
 
 /**
  * Basic product information
@@ -64,6 +64,9 @@ export interface ProductQueryParams {
 export interface ProductSearchParams {
     q: string;
     category?: string;
+    sort?: ProductSort;
+    minPrice?: number;
+    maxPrice?: number;
     page?: number;
     size?: number;
 }
