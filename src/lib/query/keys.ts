@@ -40,6 +40,10 @@ export const queryKeys = {
   ),
   product: (id: string) => ['products', id] as const,
 
+  // Friends
+  friends: ['friends'] as const,
+  friendRequests: ['friends', 'requests'] as const,
+
   // Members
   member: (id: string) => ['members', id] as const,
   memberFriends: (id: string) => ['members', id, 'friends'] as const,

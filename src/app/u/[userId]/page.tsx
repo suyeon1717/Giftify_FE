@@ -14,6 +14,7 @@ import { InlineError } from '@/components/common/InlineError';
 import { Loader2 } from 'lucide-react';
 
 import type { Funding } from '@/types/funding';
+import { AddFriendButton } from '@/features/friend/components/AddFriendButton';
 
 export function UserHomeContent({ userId }: { userId: string }) {
     const { user: auth0User } = useAuth();
@@ -30,7 +31,6 @@ export function UserHomeContent({ userId }: { userId: string }) {
             avatarUrl: auth0User?.picture || profile.avatarUrl || '/images/default-avatar.png',
             coverImageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80',
             followerCount: 0,
-            isFollowing: false,
         };
     }, [profile, auth0User]);
 

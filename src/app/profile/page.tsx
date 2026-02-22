@@ -15,6 +15,7 @@ import { formatPrice } from '@/lib/format';
 
 const MY_GIFT_MENU = [
     { label: '위시리스트', href: '/wishlist' },
+    { label: '친구 관리', href: '/friends' },
     { label: '참여한 펀딩', href: '/fundings/participated' },
     { label: '받은 선물', href: '/fundings/received' },
 ];
