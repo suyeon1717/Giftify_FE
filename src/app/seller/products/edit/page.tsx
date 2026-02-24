@@ -104,8 +104,12 @@ export default function EditProductPage() {
             return;
         }
 
-        if (form.name !== product.name) changed.name = form.name;
-        if (form.description !== product.description) changed.description = form.description;
+        const trimmedName = form.name.trim();
+        const trimmedDescription = form.description.trim();
+        const trimmedImageKey = form.imageKey.trim();
+
+        if (trimmedName !== product.name) changed.name = trimmedName;
+        if (trimmedDescription !== product.description) changed.description = trimmedDescription;
         if ((form.category || CATEGORIES[0].value) !== (product.category || CATEGORIES[0].value)) changed.category = form.category;
         if (priceNum !== product.price) changed.price = priceNum;
         if (stockNum !== product.stock) {
@@ -113,7 +117,8 @@ export default function EditProductPage() {
             changed.expectedStock = expectedStockRef.current;
         }
         if (form.status !== product.status) changed.status = form.status as any;
-        if ((form.imageKey || '') !== (product.imageKey || '')) changed.imageKey = form.imageKey;
+        if (trimmedImageKey !== (product.imageKey || '')) changed.imageKey = trimmedImageKey;
+
 
         if (Object.keys(changed).length === 0) {
             toast.info('수정된 내용이 없습니다.');
