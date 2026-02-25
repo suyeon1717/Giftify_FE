@@ -1,6 +1,11 @@
 import { Funding } from './funding';
 
 /**
+ * Cart item availability status
+ */
+export type ItemStatus = 'AVAILABLE' | 'SOLD_OUT' | 'DISCONTINUED' | 'FUNDING_ENDED';
+
+/**
  * Shopping cart containing funding participation items
  */
 export interface Cart {
@@ -15,21 +20,27 @@ export interface Cart {
  * Cart item representing a funding participation
  */
 export interface CartItem {
-    id: string;
+    id: string; // Composite key: cartId::targetType::targetId
     cartId: string;
-    fundingId: string;
-    receiverId: number;
-    funding: Funding;
-    amount: number;
+    targetType: 'FUNDING' | 'FUNDING_PENDING';
+    targetId: string;
+    receiverId: string | null;
+    productName: string;
+    productPrice: number;
+    contributionAmount: number;
+    amount: number; // For backward compatibility / UI consistency
+    funding: Funding; // Always present for funding types
     selected: boolean;
     isNewFunding: boolean;
     createdAt: string;
+    status: ItemStatus;
+    statusMessage?: string | null;
 }
 
 export interface CartItemCreateRequest {
     fundingId?: string;
     wishItemId?: string;
-    amount?: number;
+    amount: number;
 }
 
 /**

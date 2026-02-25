@@ -4,7 +4,8 @@ import type {
   Cart,
   CartItem,
   CartItemCreateRequest,
-  CartItemUpdateRequest
+  CartItemUpdateRequest,
+  ItemStatus,
 } from '@/types/cart';
 
 // --- Backend V2 API Types ---
@@ -12,7 +13,7 @@ import type {
 /**
  * 백엔드 TargetType enum
  */
-type BackendTargetType = 'FUNDING_PENDING' | 'FUNDING' | 'GENERAL_PRODUCT';
+type BackendTargetType = 'FUNDING_PENDING' | 'FUNDING';
 
 /**
  * 백엔드 CartItemRequest
@@ -34,6 +35,8 @@ interface BackendCartItemResponse {
   productName: string;
   productPrice: number;
   contributionAmount: number;
+  status: string; // ItemStatus enum (AVAILABLE, SOLD_OUT, DISCONTINUED, FUNDING_ENDED)
+  statusMessage: string | null;
 }
 
 /**
@@ -64,14 +67,19 @@ function mapBackendCartItem(item: BackendCartItemResponse, cartId: number): Cart
   return {
     id: `${cartId}::${item.targetType}::${item.targetId}`, // 복합 키 생성
     cartId: cartId.toString(),
-    fundingId: item.targetType === 'FUNDING' ? item.targetId.toString() : '',
-    receiverId: item.receiverId,
+    targetType: item.targetType as any,
+    targetId: item.targetId.toString(),
+    receiverId: item.receiverId?.toString() || null,
+    productName: item.productName || '',
+    productPrice: item.productPrice,
+    contributionAmount: item.contributionAmount,
+    amount: item.contributionAmount,
     funding: {
       id: item.targetType === 'FUNDING' ? item.targetId.toString() : '',
       wishItemId: item.targetType === 'FUNDING_PENDING' ? item.targetId.toString() : '',
       product: {
         id: '',
-        name: item.productName,
+        name: item.productName || '',
         price: item.productPrice,
         imageUrl: resolveImageUrl(undefined),
         status: 'ON_SALE',
@@ -79,19 +87,24 @@ function mapBackendCartItem(item: BackendCartItemResponse, cartId: number): Cart
       },
       organizerId: '',
       organizer: { id: '', nickname: '', avatarUrl: null },
-      recipientId: '',
-      recipient: { id: '', nickname: '', avatarUrl: null },
+      recipientId: item.receiverId?.toString() || '',
+      recipient: {
+        id: item.receiverId?.toString() || '',
+        nickname: '', // 백엔드에서 닉네임은 미제공 (필요시 별도 조회 필요)
+        avatarUrl: null
+      },
       targetAmount: item.productPrice,
-      currentAmount: 0,
+      currentAmount: 0, // 백엔드에서 미제공
       status: 'IN_PROGRESS',
       participantCount: 0,
       expiresAt: '',
       createdAt: '',
     },
-    amount: item.contributionAmount,
-    selected: true, // 백엔드에서 미제공, 기본값 true
+    selected: item.status === 'AVAILABLE', // unavailable 아이템은 비선택
     isNewFunding,
     createdAt: new Date().toISOString(),
+    status: (item.status as ItemStatus) || 'AVAILABLE',
+    statusMessage: item.statusMessage,
   };
 }
 
@@ -129,7 +142,7 @@ export async function addCartItem(data: CartItemCreateRequest): Promise<void> {
   if (data.fundingId) {
     targetType = 'FUNDING';
     targetId = parseInt(data.fundingId, 10);
-    amount = data.amount || 0;
+    amount = data.amount;
   } else if (data.wishItemId) {
     targetType = 'FUNDING_PENDING';
     targetId = parseInt(data.wishItemId, 10);

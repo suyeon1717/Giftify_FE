@@ -14,9 +14,10 @@ import { useUpdateCartItem, useRemoveCartItems, useToggleCartSelection } from '@
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { InlineError } from '@/components/common/InlineError';
-import { Gift, Loader2 } from 'lucide-react';
+import { Gift, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 export default function CartPage() {
     const router = useRouter();
@@ -35,7 +36,8 @@ export default function CartPage() {
     const toggleSelection = useToggleCartSelection();
 
     const selectedItems = cart?.items.filter(item => item.selected) || [];
-    const totalAmount = selectedItems.reduce((sum, item) => sum + item.amount, 0);
+    const purchasableSelectedItems = selectedItems.filter(item => item.status === 'AVAILABLE');
+    const totalAmount = purchasableSelectedItems.reduce((sum, item) => sum + item.amount, 0);
     const allSelected = (cart?.items.length ?? 0) > 0 && cart?.items.every(item => item.selected);
 
     const handleUpdateAmount = (id: string, amount: number) => {
@@ -83,9 +85,9 @@ export default function CartPage() {
 
     const handleRemoveSelected = () => {
         if (!cart || selectedItems.length === 0) return;
-        
+
         const selectedIds = selectedItems.map(item => item.id);
-        
+
         removeCartItems.mutate(selectedIds, {
             onSuccess: () => {
                 toast.success(`${selectedIds.length}개의 상품이 삭제되었습니다.`);
@@ -97,15 +99,16 @@ export default function CartPage() {
     };
 
     const handleCheckout = () => {
-        if (selectedItems.length === 0) {
-            toast.error('결제할 펀딩을 선택해주세요.');
+        if (purchasableSelectedItems.length === 0) {
+            toast.error('결제 가능한 펀딩을 선택해주세요.');
             return;
         }
         router.push('/checkout');
     };
 
     // Calculate D-day helper
-    const getDaysLeft = (expiresAt: string) => {
+    const getDaysLeft = (expiresAt?: string) => {
+        if (!expiresAt) return null;
         const today = new Date();
         const expiryDate = new Date(expiresAt);
         return Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -226,14 +229,20 @@ export default function CartPage() {
 
                             {/* Cart Items */}
                             {cart.items.map((item) => {
-                                const { funding } = item;
-                                const progressPercent = (funding.currentAmount / funding.targetAmount) * 100;
+                                const { funding, productName } = item;
+                                const progressPercent = (funding.targetAmount > 0)
+                                    ? (funding.currentAmount / funding.targetAmount) * 100
+                                    : 0;
                                 const daysLeft = getDaysLeft(funding.expiresAt);
+                                const isAvailable = item.status === 'AVAILABLE';
 
                                 return (
                                     <div
                                         key={item.id}
-                                        className="grid grid-cols-12 gap-4 border-b border-border py-6 items-start"
+                                        className={cn(
+                                            "grid grid-cols-12 gap-4 border-b border-border py-6 items-start",
+                                            !isAvailable && "opacity-60"
+                                        )}
                                     >
                                         {/* Checkbox */}
                                         <div className="col-span-1 pt-1">
@@ -245,25 +254,23 @@ export default function CartPage() {
                                             />
                                         </div>
 
-                                        {/* Funding Info - 29cm Style */}
+                                        {/* Item Info - 29cm Style */}
                                         <div className="col-span-5 flex gap-4">
-                                            <Link
-                                                href={`/fundings/${funding.id}`}
-                                                className="relative w-[100px] h-[130px] bg-secondary flex-shrink-0 overflow-hidden"
-                                            >
-                                                {funding.product.imageUrl ? (
-                                                    <Image
-                                                        src={funding.product.imageUrl}
-                                                        alt={funding.product.name}
-                                                        fill
-                                                        className="object-cover hover:opacity-80 transition-opacity"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/50 text-xs">
-                                                        No Image
-                                                    </div>
-                                                )}
-                                            </Link>
+                                            <div className="relative w-[100px] h-[130px] bg-secondary flex-shrink-0 overflow-hidden">
+                                                <Image
+                                                    src={funding?.product?.imageUrl || "/images/placeholder-product.svg"}
+                                                    alt={productName || "상품 이미지"}
+                                                    fill
+                                                    className={cn(
+                                                        "object-cover transition-opacity",
+                                                        isAvailable ? "hover:opacity-80" : "grayscale"
+                                                    )}
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.src = "/images/placeholder-product.svg";
+                                                    }}
+                                                />
+                                            </div>
                                             <div className="flex flex-col justify-start min-w-0 py-1">
                                                 {/* Recipient Info */}
                                                 <div className="flex items-center gap-2 mb-2">
@@ -276,18 +283,24 @@ export default function CartPage() {
                                                     <span className="text-xs text-muted-foreground">
                                                         {funding.recipient.nickname || '알 수 없음'}님에게
                                                     </span>
-                                                    {item.isNewFunding && (
-                                                        <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5">NEW</span>
-                                                    )}
                                                 </div>
-                                                <Link
-                                                    href={`/fundings/${funding.id}`}
-                                                    className="text-sm hover:underline transition-all line-clamp-2 leading-relaxed"
-                                                >
-                                                    {funding.product.name}
-                                                </Link>
+                                                <h3 className={cn(
+                                                    "text-sm font-medium transition-all line-clamp-2 leading-relaxed",
+                                                    isAvailable ? "hover:underline" : "text-muted-foreground"
+                                                )}>
+                                                    {productName}
+                                                </h3>
+
+                                                {/* Unavailable message */}
+                                                {!isAvailable && (
+                                                    <div className="flex items-center gap-1.5 py-1 px-2 mt-2 bg-destructive/5 text-destructive border border-destructive/10 rounded text-[11px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
+                                                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                                        <span>{item.statusMessage || '구매가 불가능한 상품입니다.'}</span>
+                                                    </div>
+                                                )}
+
                                                 <p className="text-sm font-medium mt-2">
-                                                    {formatPrice(funding.targetAmount)}
+                                                    {formatPrice(item.productPrice)}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground mt-1">
                                                     현재 {formatPrice(funding.currentAmount)} 모금됨
@@ -295,21 +308,28 @@ export default function CartPage() {
                                             </div>
                                         </div>
 
-                                        {/* Participation Amount - 29cm Style */}
+                                        {/* Participation Amount/Quantity - 29cm Style */}
                                         <div className="col-span-2 flex flex-col items-center gap-2 pt-1">
                                             <div className="w-full max-w-[120px]">
                                                 <input
                                                     type="text"
                                                     value={item.amount.toLocaleString()}
                                                     onChange={(e) => {
+                                                        if (!isAvailable) return;
                                                         const value = parseInt(e.target.value.replace(/,/g, '')) || 0;
                                                         if (value >= 0) {
                                                             handleUpdateAmount(item.id, value);
                                                         }
                                                     }}
-                                                    className="w-full text-sm font-medium text-center bg-transparent border-b border-border focus:border-foreground focus:outline-none py-1"
+                                                    disabled={!isAvailable}
+                                                    className={cn(
+                                                        "w-full text-sm font-medium text-center bg-transparent border-b border-border focus:border-foreground focus:outline-none py-1",
+                                                        !isAvailable && "text-muted-foreground cursor-not-allowed"
+                                                    )}
                                                 />
-                                                <p className="text-[11px] text-muted-foreground text-center mt-1">원</p>
+                                                <p className="text-[11px] text-muted-foreground text-center mt-1">
+                                                    원
+                                                </p>
                                             </div>
                                             <button
                                                 onClick={() => handleRemove(item.id)}
@@ -321,22 +341,32 @@ export default function CartPage() {
 
                                         {/* Progress */}
                                         <div className="col-span-2 pt-1">
-                                            <div className="space-y-1">
-                                                <Progress value={progressPercent} className="h-1.5" />
-                                                <p className="text-xs text-muted-foreground text-center">
-                                                    {Math.round(progressPercent)}% 달성
-                                                </p>
-                                            </div>
+                                            {isAvailable ? (
+                                                <div className="space-y-1">
+                                                    <Progress value={progressPercent} className="h-1.5" />
+                                                    <p className="text-xs text-muted-foreground text-center">
+                                                        {Math.round(progressPercent)}% 달성
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="text-center text-xs text-muted-foreground italic">
+                                                    -
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Days Left - 29cm Style */}
                                         <div className="col-span-2 text-center pt-1">
-                                            <p className={`text-sm font-medium ${daysLeft <= 3 ? 'text-destructive' : ''}`}>
-                                                D-{daysLeft}
-                                            </p>
-                                            <p className="text-[11px] text-muted-foreground mt-1">
-                                                {funding.participantCount}명 참여
-                                            </p>
+                                            {isAvailable && daysLeft !== null && (
+                                                <>
+                                                    <p className={`text-sm font-medium ${daysLeft <= 3 ? 'text-destructive' : ''}`}>
+                                                        D-{daysLeft}
+                                                    </p>
+                                                    <p className="text-[11px] text-muted-foreground mt-1">
+                                                        {funding.participantCount || 0}명 참여
+                                                    </p>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -390,14 +420,20 @@ export default function CartPage() {
 
                             {/* Mobile Cart Items */}
                             {cart.items.map((item) => {
-                                const { funding } = item;
-                                const progressPercent = (funding.currentAmount / funding.targetAmount) * 100;
+                                const { funding, productName } = item;
+                                const progressPercent = (funding.targetAmount > 0)
+                                    ? (funding.currentAmount / funding.targetAmount) * 100
+                                    : 0;
                                 const daysLeft = getDaysLeft(funding.expiresAt);
+                                const isAvailable = item.status === 'AVAILABLE';
 
                                 return (
                                     <div
                                         key={item.id}
-                                        className="flex gap-3 py-5 border-b border-border"
+                                        className={cn(
+                                            "flex gap-3 py-5 border-b border-border",
+                                            !isAvailable && "opacity-60"
+                                        )}
                                     >
                                         <Checkbox
                                             checked={item.selected}
@@ -407,14 +443,16 @@ export default function CartPage() {
                                             className="mt-1"
                                         />
                                         <div className="relative w-20 h-24 bg-secondary flex-shrink-0 overflow-hidden">
-                                            {funding.product.imageUrl && (
-                                                <Image
-                                                    src={funding.product.imageUrl}
-                                                    alt={funding.product.name}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            )}
+                                            <Image
+                                                src={funding?.product?.imageUrl || "/images/placeholder-product.svg"}
+                                                alt={productName}
+                                                fill
+                                                className={cn("object-cover", !isAvailable && "grayscale")}
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.src = "/images/placeholder-product.svg";
+                                                }}
+                                            />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start mb-1">
@@ -431,7 +469,10 @@ export default function CartPage() {
                                                             {funding.recipient.nickname}님에게
                                                         </span>
                                                     </div>
-                                                    <p className="text-sm line-clamp-2">{funding.product.name}</p>
+                                                    <p className={cn(
+                                                        "text-sm line-clamp-2",
+                                                        !isAvailable && "text-muted-foreground"
+                                                    )}>{productName}</p>
                                                 </div>
                                                 <button
                                                     onClick={() => handleRemove(item.id)}
@@ -441,16 +482,28 @@ export default function CartPage() {
                                                 </button>
                                             </div>
 
-                                            {/* Progress Bar */}
-                                            <div className="space-y-1 mt-2">
-                                                <Progress value={progressPercent} className="h-1" />
-                                                <div className="flex justify-between text-[10px] text-muted-foreground">
-                                                    <span>{Math.round(progressPercent)}% 달성</span>
-                                                    <span className={daysLeft <= 3 ? 'text-destructive' : ''}>
-                                                        D-{daysLeft}
-                                                    </span>
+                                            {/* Unavailable message */}
+                                            {!isAvailable && (
+                                                <div className="flex items-center gap-1.5 py-1 px-2 mb-2 bg-destructive/5 text-destructive border border-destructive/10 rounded text-[10px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
+                                                    <AlertCircle className="h-3 w-3 shrink-0" />
+                                                    <span>{item.statusMessage || '구매 불가'}</span>
                                                 </div>
-                                            </div>
+                                            )}
+
+                                            {/* Progress Bar */}
+                                            {isAvailable && (
+                                                <div className="space-y-1 mt-2">
+                                                    <Progress value={progressPercent} className="h-1" />
+                                                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                                                        <span>{Math.round(progressPercent)}% 달성</span>
+                                                        {daysLeft !== null && (
+                                                            <span className={daysLeft <= 3 ? 'text-destructive' : ''}>
+                                                                D-{daysLeft}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {/* Amount Input */}
                                             <div className="flex items-center justify-between mt-3">
@@ -460,12 +513,17 @@ export default function CartPage() {
                                                         type="text"
                                                         value={item.amount.toLocaleString()}
                                                         onChange={(e) => {
+                                                            if (!isAvailable) return;
                                                             const value = parseInt(e.target.value.replace(/,/g, '')) || 0;
                                                             if (value >= 0) {
                                                                 handleUpdateAmount(item.id, value);
                                                             }
                                                         }}
-                                                        className="w-20 text-sm font-medium text-right bg-transparent border-b border-border focus:border-foreground focus:outline-none py-0.5"
+                                                        disabled={!isAvailable}
+                                                        className={cn(
+                                                            "w-20 text-sm font-medium text-right bg-transparent border-b border-border focus:border-foreground focus:outline-none py-0.5",
+                                                            !isAvailable && "text-muted-foreground cursor-not-allowed"
+                                                        )}
                                                     />
                                                     <span className="text-sm">원</span>
                                                 </div>
@@ -516,7 +574,7 @@ export default function CartPage() {
                                 <Button
                                     className="flex-1 h-14 text-sm font-normal tracking-wide"
                                     onClick={handleCheckout}
-                                    disabled={selectedItems.length === 0}
+                                    disabled={purchasableSelectedItems.length === 0}
                                 >
                                     CHECK OUT
                                 </Button>
