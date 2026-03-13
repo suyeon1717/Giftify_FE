@@ -17,8 +17,8 @@ export const cartHandlers: HttpHandler[] = [
         cartId: 1,
         memberId: 1,
         items: cartItems.map(item => ({
-          targetType: item.targetType,
-          targetId: item.targetId,
+          wishlistItemId: item.targetId,
+          wishlistId: item.wishlistId || 1,
           receiverId: item.funding.recipientId ? parseInt(item.funding.recipientId.replace('member-', '').replace('user-', ''), 10) : 1,
           receiverNickname: item.funding.recipient.nickname || '테스터',
           productId: item.productId,
@@ -39,11 +39,12 @@ export const cartHandlers: HttpHandler[] = [
   }),
 
   http.post('**/api/v2/carts', async ({ request }) => {
-    const body = await request.json();
-    const { targetId, amount } = body as {
+    const body = await request.json() as {
       targetId: number;
+      wishlistId?: number;
       amount: number;
     };
+    const { targetId, wishlistId, amount } = body;
 
     let funding = fundings.find((f) => f.id === `funding-${targetId}`);
     const targetType = funding ? 'FUNDING' : 'FUNDING_PENDING';
@@ -103,6 +104,7 @@ export const cartHandlers: HttpHandler[] = [
       cartId: 'cart-1',
       targetType,
       targetId,
+      wishlistId: wishlistId || null,
       productId: parseInt(funding.product.id.replace('product-', ''), 10) || 1,
       fundingId: funding.id,
       funding,
@@ -127,11 +129,11 @@ export const cartHandlers: HttpHandler[] = [
 
   http.patch('**/api/v2/carts/items', async ({ request }) => {
     const body = await request.json();
-    const updates = body as { targetType: string; targetId: number; amount: number }[];
+    const updates = body as { wishlistItemId: number; amount: number; wishlistId?: number }[];
 
     updates.forEach(update => {
       const item = cartItems.find(
-        i => i.targetType === update.targetType && i.targetId === update.targetId
+        i => i.targetId === update.wishlistItemId
       );
       if (item) {
         item.amount = update.amount;
@@ -141,15 +143,14 @@ export const cartHandlers: HttpHandler[] = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.delete('**/api/v2/carts/items/:targetType', ({ params, request }) => {
-    const { targetType } = params;
+  http.delete('**/api/v2/carts/items', ({ request }) => {
     const url = new URL(request.url);
-    const targetIdsStr = url.searchParams.get('targetIds');
+    const targetIdsStr = url.searchParams.get('wishlistItemIds');
 
     if (targetIdsStr) {
       const targetIds = targetIdsStr.split(',').map(id => parseInt(id, 10));
       const updatedCartItems = cartItems.filter(
-        i => !(i.targetType === targetType && targetIds.includes(i.targetId))
+        i => !targetIds.includes(parseInt(String(i.targetId), 10))
       );
       setCartItems(updatedCartItems);
     }

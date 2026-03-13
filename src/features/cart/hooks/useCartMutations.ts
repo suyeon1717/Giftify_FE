@@ -29,7 +29,7 @@ export function useAddToCart() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart });
       // Also invalidate the specific funding unconditionally
-      queryClient.invalidateQueries({ queryKey: queryKeys.funding(variables.targetId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.funding(variables.wishlistItemId as string) });
     },
   });
 }
@@ -100,22 +100,8 @@ export function useRemoveCartItems() {
 
   return useMutation({
     mutationFn: async (itemIds: string[]) => {
-      // 1. Group IDs by targetType
-      const groups = new Map<string, number[]>();
-
-      itemIds.forEach((id) => {
-        const { targetType, targetId } = parseCartItemId(id);
-        const list = groups.get(targetType) || [];
-        list.push(targetId);
-        groups.set(targetType, list);
-      });
-
-      // 2. Call API in parallel
-      const promises = Array.from(groups.entries()).map(([type, ids]) =>
-        removeCartItem(type, ids)
-      );
-
-      await Promise.all(promises);
+      const idsToRemove = itemIds.map((id) => parseCartItemId(id).wishlistItemId);
+      await removeCartItem(idsToRemove);
     },
     onMutate: async (itemIds) => {
       // Cancel any outgoing refetches
@@ -198,7 +184,7 @@ export function useUpdateCartItems() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (updates: { itemId: string; amount: number }[]) =>
+    mutationFn: (updates: { itemId: string; amount: number; wishlistId: string | number | null }[]) =>
       updateCartItems(updates),
     onMutate: async (updates) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.cart });

@@ -24,6 +24,7 @@ export interface CartItem {
     cartId: string;
     targetType: 'FUNDING' | 'FUNDING_PENDING';
     targetId: string;
+    wishlistId: string | null;
     receiverId: string | null;
     receiverNickname: string | null;
     imageKey: string | null;
@@ -43,7 +44,8 @@ export interface CartItem {
 }
 
 export interface CartItemCreateRequest {
-    targetId: string;
+    wishlistId?: string | number;
+    wishlistItemId: string | number;
     amount: number;
 }
 
@@ -53,4 +55,5 @@ export interface CartItemCreateRequest {
 export interface CartItemUpdateRequest {
     amount?: number;
     selected?: boolean;
+    wishlistId?: string | number;
 }
